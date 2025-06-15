@@ -136,3 +136,4 @@ dist
 .pnp.*
 example.mjs
 jsonExample.json
+chatHistory.json
