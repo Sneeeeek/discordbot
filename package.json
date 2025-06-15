@@ -11,6 +11,6 @@
     "start": "nodemon bot.js"
   },
   "nodemonConfig": {
-    "ignore": "chatHistory.json"
+    "ignore": "*.json"
   }
 }
