@@ -9,5 +9,8 @@
   },
   "scripts": {
     "start": "nodemon bot.js"
+  },
+  "nodemonConfig": {
+    "ignore": "chatHistory.json"
   }
 }
