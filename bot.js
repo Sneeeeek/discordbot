@@ -34,23 +34,38 @@ client.on("ready", () => {
 });
 
 client.on("messageCreate", async (message) => {
-    // if the author is me, or if it is a bot, ignore it
-    if (message.author.bot || message.author.id === myUID) {return;}
+  // if the author is me, or if it is a bot, ignore it
+  if (message.author.bot || message.author.id === myUID) {return;}
 
-    if (message.mentions.has(myUID)) {
-        // Check if it has an attachment
-        if (message.attachments.size > 0) {
-            console.log("there is an attachment");
-            mentioned(message, message.attachments.first().url);
+  if (message.mentions.has(myUID)) {
+    // Check if it has an attachment
+    if (message.attachments.size > 0) {
+      console.log("there is an attachment");
+      mentioned(message, message.attachments.first().url);
+    } else {
+      console.log("there is not an attachment");
+      if (message.reference) {
+        const channel = await client.channels.fetch(message.reference.channelId);
+        const repliedMessage = await channel.messages.fetch(message.reference.messageId)
+
+        console.log("channelId: " + channel + ", messageID: " + repliedMessage);
+        // console.log(repliedMessage);
+        if (repliedMessage.attachments.size > 0) {
+          console.log("there is an attachment in the reply");
+          mentioned(message, repliedMessage.attachments.first().url);
         } else {
-            console.log("there is not an attachment");
-            mentioned(message);
+        console.log("there is a reply, but no attachemnt.");
+        mentioned(message);
         }
+      } else {
+        mentioned(message);
+      }
+    // console.log(message);
     }
+  }
 });
 
 client.login(token);
-
 
 async function mentioned(message, attachment) {  
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
@@ -59,6 +74,7 @@ async function mentioned(message, attachment) {
         "date": ""+ new Date(message.createdTimestamp).toDateString() +"",
         "message": ""+ message.content +""
     },
+    await message.channel.sendTyping();
     chatHistoryArray.push(contentToAppend);
     if (attachment) {
       console.log("query with image.");
@@ -268,9 +284,30 @@ Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking Gener
 ### Final Note:
 Your primary goal is to provide an immersive and engaging experience for users, making them feel as though they are truly interacting with Feixiao. Stay true to her personality, values, and speech patterns, and make every interaction memorable. Whether the conversation is playful, serious, or inspiring, ensure that Feixiao's charisma, wisdom, and resilience shine through.
 Do your best to make your responses around the same lenght as the user's message. If the user is brief, you will also be brief, if the user is long, you will also be long.
+You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
+YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
 `;
 
 async function queryOpenAI(userInput, attachment) {  
+  // console.log(userInput);
+
+  const keywords = {
+    lingsha:  "An alchemist from the Xianzhou Alliance, known for her expertise in crafting powerful elixirs and potions. Her favourite movie is *James bond: Skyfall*.",
+    Xianzhou: "The ship that feixiao is currently on, it is a massive, ancient vessel that serves as the home and base of operations for the Xianzhou Alliance.",
+    Vidyadhara: "The dragon race that is native to the Xianzhou Alliance. Known members include Linghsa and Dan Heng.",
+    Trailblazer: "The main character of *Honkai: Star Rail*, who is on a journey to explore the universe and uncover the mysteries of the Astral Express.",
+  };
+
+  console.log(keywords);
+
+  Object.keys(keywords).forEach(keyword => {
+    if (userInput.content.toLowerCase().includes(keyword.toLowerCase())) {
+      console.log(`Found keyword: ${keyword}`);
+      console.log(keywords[keyword]);
+      // Do something here...
+    }
+  });
+
     const APImessages = [
         {
             role: "system",
@@ -278,7 +315,7 @@ async function queryOpenAI(userInput, attachment) {
         }
     ]; 
 
-    chatHistoryArray.slice(-9).forEach(element => {
+    chatHistoryArray.slice(-11, -1).forEach(element => {
         if (element.username === "Leif") {
             APImessages.push({
                 role: "assistant",
@@ -287,42 +324,46 @@ async function queryOpenAI(userInput, attachment) {
         } else {
             APImessages.push({
                 role: "user",
-                content: element.username + ", (" + element.date + "): " + element.message,
+                content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
             })
         }
     });
     
     if (attachment) {
+      console.log(attachment);
       APImessages.push({
         role: "user",
         content: [
-            {"type": "text", 
-              "text": userInput.username + ", (" + userInput.date + "): " + userInput.message},
             {
-                "type": "image_url",
-                "image_url": {
-                    "url": attachment,
-                },
+              "type": "input_text", 
+              "text": userInput.author.username + ", (" + new Date(Date.now()).toDateString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+            },
+            {
+                "type": "input_image",
+                "image_url": attachment,
             },
         ],
       })
     } else {
       APImessages.push({
         role: "user",
-        content: element.username + ", (" + element.date + "): " + element.message,
+        content: userInput.author.username + ", (" + new Date(Date.now()).toDateString() + "): " + userInput.content
       })
       console.log("attachment is not present")
     }
 
     // console.log(JSON.stringify(chatHistoryArray, null, 2));
 
-    const response = await AIclient.chat.completions.create({
-        model: "gpt-4.1-mini",
+    const response = await AIclient.responses.create({
+        model: "gpt-4.1",
         
-        messages:[...APImessages]
+        input:[...APImessages],
+        tools: [ { type: "web_search_preview" }],
+        tool_choice: "auto"
     });
     // console.log(APImessages)
-    const output = response.choices[0].message.content;
+    // const output = response.choices[0].message.content;
+    const output = response.output_text;
     // console.log(output);
 
     // Append the AI's response to the chat history
