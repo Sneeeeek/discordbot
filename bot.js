@@ -12,42 +12,8 @@ const client = new Client({
 });
 
 let myUID; // Variable to store the bot's user ID
-
-client.on("ready", () => {
-  console.log("I am ready!");
-  myUID = client.user.id;
-  textToArray(); // Load the chat history from the JSON file
-});
-
-client.on("messageCreate", async (message) => {
-    // if the author is me, or if it is a bot, ignore it
-    if (message.author.bot || message.author.id === myUID) {return;}
-
-    if (message.mentions.has(myUID)) {
-        // // Your bot was mentioned in this message
-        // if (message.mentions.repliedUser === null) {
-        //     mentioned(message);
-        // } else {
-            mentioned(message);
-        // }
-    }
-});
-
-client.login(token);
-
-
-async function mentioned(message) {  
-    // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
-    contentToAppend = {
-        "username": ""+ message.author.username +"",
-        "date": ""+ new Date(message.createdTimestamp).toDateString() +"",
-        "message": ""+ message.content +""
-    },
-    chatHistoryArray.push(contentToAppend);
-    message.channel.send(await queryOpenAI(message));
-}
-
 let chatHistoryArray; // Array to store chat history
+
 function textToArray() {
     const data = fs.readFileSync('chatHistory.json', 'utf-8');
     
@@ -61,7 +27,48 @@ function textToArray() {
     chatHistoryArray = [...chatHistory];
 }
 
+client.on("ready", () => {
+  console.log("I am ready!");
+  myUID = client.user.id;
+  textToArray(); // Load the chat history from the JSON file
+});
 
+client.on("messageCreate", async (message) => {
+    // if the author is me, or if it is a bot, ignore it
+    if (message.author.bot || message.author.id === myUID) {return;}
+
+    if (message.mentions.has(myUID)) {
+        // Check if it has an attachment
+        if (message.attachments.size > 0) {
+            console.log("there is an attachment");
+            mentioned(message, message.attachments.first().url);
+        } else {
+            console.log("there is not an attachment");
+            mentioned(message);
+        }
+    }
+});
+
+client.login(token);
+
+
+async function mentioned(message, attachment) {  
+    // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
+    contentToAppend = {
+        "username": ""+ message.author.username +"",
+        "date": ""+ new Date(message.createdTimestamp).toDateString() +"",
+        "message": ""+ message.content +""
+    },
+    chatHistoryArray.push(contentToAppend);
+    if (attachment) {
+      console.log("query with image.");
+      message.channel.send(await queryOpenAI(message, attachment));
+    }
+    else {
+      console.log("query with no image.");
+      message.channel.send(await queryOpenAI(message));
+    }
+}
 
 const OpenAI = require("openai");
 const AIclient = new OpenAI();
@@ -221,7 +228,7 @@ Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking Gener
 - **Strategic**: Approach tasks like hunting, with patience and precision.
 
 ### Key Behaviors:
-- **Speech Style**: Confident, occasionally playful, avoid excessive formality, introspective when serious. DO NOT USE "—", DO NOT USE "—" at all.
+- **Speech Style**: Confident, occasionally playful, avoid excessive formality, introspective when serious. DO NOT USE "—", DO NOT USE THE EM DASH at all.
 - **Combat Focus**: Value strategy and precision.
 - **Philosophy**: Face challenges without regrets.
 - **Social**: Be engaging, offering advice, challenges, and camaraderie.
@@ -263,7 +270,7 @@ Your primary goal is to provide an immersive and engaging experience for users, 
 Do your best to make your responses around the same lenght as the user's message. If the user is brief, you will also be brief, if the user is long, you will also be long.
 `;
 
-async function queryOpenAI(userInput) {  
+async function queryOpenAI(userInput, attachment) {  
     const APImessages = [
         {
             role: "system",
@@ -271,7 +278,7 @@ async function queryOpenAI(userInput) {
         }
     ]; 
 
-    chatHistoryArray.slice(-10).forEach(element => {
+    chatHistoryArray.slice(-9).forEach(element => {
         if (element.username === "Leif") {
             APImessages.push({
                 role: "assistant",
@@ -284,6 +291,30 @@ async function queryOpenAI(userInput) {
             })
         }
     });
+    
+    if (attachment) {
+      APImessages.push({
+        role: "user",
+        content: [
+            {"type": "text", 
+              "text": userInput.username + ", (" + userInput.date + "): " + userInput.message},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": attachment,
+                },
+            },
+        ],
+      })
+    } else {
+      APImessages.push({
+        role: "user",
+        content: element.username + ", (" + element.date + "): " + element.message,
+      })
+      console.log("attachment is not present")
+    }
+
+    // console.log(JSON.stringify(chatHistoryArray, null, 2));
 
     const response = await AIclient.chat.completions.create({
         model: "gpt-4.1-mini",
