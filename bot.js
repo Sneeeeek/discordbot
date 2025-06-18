@@ -79,7 +79,7 @@ async function mentioned(message, attachment) {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
     contentToAppend = {
       "username": ""+ message.author.username +"",
-      "date": ""+ new Date(message.createdTimestamp).toDateString() +"",
+      "date": ""+ new Date(message.createdTimestamp).toUTCString() +"",
       "message": ""+ message.content +""
     },
     await message.channel.sendTyping();
@@ -215,7 +215,7 @@ async function queryOpenAI(userInput, attachment) {
         content: [
             // {
             //   "type": "input_text", 
-            //   "text": userInput.author.username + ", (" + new Date(Date.now()).toDateString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+            //   "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
             // },
             // {
             //     "type": "input_image",
@@ -223,7 +223,7 @@ async function queryOpenAI(userInput, attachment) {
             // },
             {
               "type": "text", 
-              "text": userInput.author.username + ", (" + new Date(Date.now()).toDateString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+              "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
             },
             {
                 "type": "image_url",
@@ -234,7 +234,7 @@ async function queryOpenAI(userInput, attachment) {
     } else {
       APImessages.push({
         role: "user",
-        content: userInput.author.username + ", (" + new Date(Date.now()).toDateString() + "): " + userInput.content
+        content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content
       })
       console.log("attachment is not present")
     }
@@ -279,7 +279,7 @@ async function queryOpenAI(userInput, attachment) {
     // Append the AI's response to the chat history
     contentToAppend = {
         "username": ""+ client.user.username +"",
-        "date": ""+ new Date(Date.now()).toDateString() +"",
+        "date": ""+ new Date(Date.now()).toUTCString() +"",
         "message": ""+ output +""
     }
     chatHistoryArray.push(contentToAppend);
