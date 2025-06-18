@@ -14,8 +14,14 @@ const client = new Client({
 let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
 
-function textToArray() {
-    const data = fs.readFileSync('chatHistory.json', 'utf-8');
+function textToArray(message) {
+    let filePath = message.channelId + ".json";
+    console.log(filePath);
+
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, '', 'utf8');
+    }
+    const data = fs.readFileSync(filePath, 'utf-8');
     
     if (data.trim() === '') {
         console.error('File is empty.');
@@ -30,7 +36,7 @@ function textToArray() {
 client.on("ready", () => {
   console.log("I am ready!");
   myUID = client.user.id;
-  textToArray(); // Load the chat history from the JSON file
+  // textToArray(); // Load the chat history from the JSON file
 });
 
 client.on("messageCreate", async (message) => {
@@ -68,6 +74,7 @@ client.on("messageCreate", async (message) => {
 client.login(token);
 
 async function mentioned(message, attachment) {  
+  textToArray(message);
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
     contentToAppend = {
@@ -87,7 +94,8 @@ async function mentioned(message, attachment) {
     }
   } catch (error) {
     console.log(error);
-    sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
+    // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
+    sendDMtoSnek(JSON.stringify(error, null, 2));
     message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request. I DMed the error log to my creator.`);
   }
 
@@ -147,7 +155,7 @@ Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking Gener
 ### Emotes
 You will use emojis where they fit to enhance the realism of talking to a real person.
 You also have access to the following custom emotes, you can use them freely. 
-To use them, place this structure anywhere your response: <:emoji name:emoji id>, like for example at the end of a sentence or in the middle of a sentence, but do not use them at the start of a sentence.
+To use them, place this structure anywhere your response: <:emoji name:emoji id>, like for example at the end of a sentence or in the middle of a sentence.
 List of custom emotes, the format is emoji name: emoji id: explaination of its intent and meaning.
 feixiaoIceCream: 1384552610161492049: feixiao holding an ice cream, used when Feixiao is happy or enjoying something.
 feixiaoGrin: 1384552622790414376: feixiao with a grin, used when Feixiao is being playful or mischievous.
@@ -162,6 +170,7 @@ Your primary goal is to provide an immersive and engaging experience for users, 
 Do your best to make your responses around the same lenght as the user's message. If the user is brief, you will also be brief, if the user is long, you will also be long.
 DO NOT USE "—", DO NOT USE THE EM DASH at all.
 YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
+YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
 Connect clauses directly, don't use em dashes. 
 `;
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
@@ -204,13 +213,21 @@ async function queryOpenAI(userInput, attachment) {
       APImessages.push({
         role: "user",
         content: [
+            // {
+            //   "type": "input_text", 
+            //   "text": userInput.author.username + ", (" + new Date(Date.now()).toDateString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+            // },
+            // {
+            //     "type": "input_image",
+            //     "image_url": attachment,
+            // },
             {
-              "type": "input_text", 
+              "type": "text", 
               "text": userInput.author.username + ", (" + new Date(Date.now()).toDateString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
             },
             {
-                "type": "input_image",
-                "image_url": attachment,
+                "type": "image_url",
+                image_url: { url: attachment},
             },
         ],
       })
@@ -238,18 +255,26 @@ async function queryOpenAI(userInput, attachment) {
     content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
   })
 
-    const response = await AIclient.responses.create({
-        model: "gpt-4.1",
-        
-        input:[...APImessages],
-        
-        // tools: [ { type: "web_search_preview" }],
-        // tool_choice: "auto"
-    });
-    // console.log(APImessages)
-    // const output = response.choices[0].message.content;
-    const output = response.output_text;
-    // console.log(output);
+  const response = await AIclient.chat.completions.create({
+    model: "gpt-4.1",
+    messages:[...APImessages],
+  });
+  const output = response.choices[0].message.content;
+
+  // const response = await AIclient.responses.create({
+  //     model: "gpt-4.1",
+      
+  //     input:[...APImessages],
+      
+  //     // tools: [ { type: "web_search_preview" }],
+  //     // tool_choice: "auto"
+  // });
+  // const output = response.output_text;
+
+
+  // console.log(output);
+  // console.log(APImessages)
+
 
     // Append the AI's response to the chat history
     contentToAppend = {
@@ -259,15 +284,14 @@ async function queryOpenAI(userInput, attachment) {
     }
     chatHistoryArray.push(contentToAppend);
 
-    fs.writeFile('chatHistory.json', JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
+    fs.writeFile(userInput.channelId + ".json", JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
         if (err) {
             console.error('Failed to write chat history:', err);
         } else {
             console.log('Chat history updated successfully.');
         }
     })
-
-    return output;
+    if (await output.length > 1900) {return "(Response too long, it has been truncated)\n" + output.slice(0, -100);} else {return output;}
 }
 
 async function sendDMtoSnek(userInput) {
