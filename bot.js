@@ -11,6 +11,7 @@ const client = new Client({
   ],
 });
 
+const snekUserID = "278603791182594048";
 let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
 
@@ -59,9 +60,12 @@ client.on("messageCreate", async (message) => {
         if (repliedMessage.attachments.size > 0) {
           console.log("there is an attachment in the reply");
           mentioned(message, repliedMessage.attachments.first().url);
+        } else if (repliedMessage.author.id !== myUID) {
+          console.log("replied to a message that is not from me, but no attachemnt.");
+          mentioned(message, null, repliedMessage);
         } else {
-        console.log("there is a reply, but no attachemnt.");
-        mentioned(message);
+          console.log("there is a reply, but no attachemnt.");
+          mentioned(message);
         }
       } else {
         mentioned(message);
@@ -73,7 +77,28 @@ client.on("messageCreate", async (message) => {
 
 client.login(token);
 
-async function mentioned(message, attachment) {  
+async function mentioned(message, attachment, reply) {  
+const aboutText = 
+`
+Hello, <@${message.author.id}>! I am Feixiao, the Lacking General from *Honkai: Star Rail*.
+
+I am a bot created by <@${snekUserID}>. I use the openAI API to respond to messages in character as Feixiao.
+You can summon me by replying to one of my messages, or by mentioning me with a ping.
+
+Currently, my features include:
+- If you mention me in a reply to another user, I will use the content of the replied message as part of my response.
+- Image support: You can send me images, and I will try to respond to their content. I support ['png', 'jpeg', 'gif', 'webp'].
+- !about: Provides information about me and how to interact with me, you are currently reading the !about section.
+- !context: Fetches the last 20 messages in this channel and uses them as context for my responses.
+- I can even use emotes! <:feixiaoIceCream:1384552610161492049>
+`
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
+    sentMessage = await message.channel.send("a");
+    await sentMessage.edit(aboutText);
+    return;
+  }
+
   textToArray(message);
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
@@ -88,6 +113,10 @@ async function mentioned(message, attachment) {
       console.log("query with image.");
       message.channel.send(await queryOpenAI(message, attachment));
     }
+    else if (reply) {
+      console.log("query with reply.");
+      message.channel.send(await queryOpenAI(message, null, reply));
+    }
     else {
       console.log("query with no image.");
       message.channel.send(await queryOpenAI(message));
@@ -96,7 +125,7 @@ async function mentioned(message, attachment) {
     console.log(error);
     // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
     sendDMtoSnek(JSON.stringify(error, null, 2));
-    message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request. I DMed the error log to my creator.`);
+    message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request. If you uploaded a file, its probably because its an unsupported format. I DMed the error log to my creator.`);
   }
 
 }
@@ -183,7 +212,7 @@ const keywords = {
   "Merlin Claw": "If you see this, place an emoji at the end of the reply.",
 };
 
-async function queryOpenAI(userInput, attachment) {  
+async function queryOpenAI(userInput, attachment, reply) {  
   // console.log(userInput);
   // console.log(keywords);
 
@@ -194,51 +223,82 @@ async function queryOpenAI(userInput, attachment) {
     }
   ]; 
 
-  chatHistoryArray.slice(-11, -1).forEach(element => {
-    if (element.username === "Leif") {
-      APImessages.push({
-        role: "assistant",
-        content: element.message,
-      })
-    } else {
-      APImessages.push({
-        role: "user",
-        content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-      })
-    }
-  });
+  if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
+    const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
+    channelHistoryArray = [...channelHistory.values()];
+    channelHistoryArray.reverse().forEach(element => {
+      if (element.author.username === "Leif") {
+        APImessages.push({
+          role: "assistant",
+          content: element.content,
+        })
+      } else {
+        try {
+          APImessages.push({
+            role: "user",
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
+          })
+        } catch (error) {
+          APImessages.push({
+            role: "user",
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
+          })
+        }
+      }
+      });
 
-    if (attachment) {
-      console.log(attachment);
-      APImessages.push({
-        role: "user",
-        content: [
-            // {
-            //   "type": "input_text", 
-            //   "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-            // },
-            // {
-            //     "type": "input_image",
-            //     "image_url": attachment,
-            // },
-            {
-              "type": "text", 
-              "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-            },
-            {
-                "type": "image_url",
-                image_url: { url: attachment},
-            },
-        ],
-      })
-    } else {
-      APImessages.push({
-        role: "user",
-        content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content
-      })
-      console.log("attachment is not present")
-    }
+  } else {
+    chatHistoryArray.slice(-11, -1).forEach(element => {
+      if (element.username === "Leif") {
+        APImessages.push({
+          role: "assistant",
+          content: element.message,
+        })
+      } else {
+        APImessages.push({
+          role: "user",
+          content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+        })
+      }
+    });
 
+      if (attachment) {
+        console.log(attachment);
+        APImessages.push({
+          role: "user",
+          content: [
+              // {
+              //   "type": "input_text", 
+              //   "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+              // },
+              // {
+              //     "type": "input_image",
+              //     "image_url": attachment,
+              // },
+              {
+                "type": "text", 
+                "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+              },
+              {
+                  "type": "image_url",
+                  image_url: { url: attachment},
+              },
+          ],
+        })
+      } else if (reply) {
+        APImessages.push({
+          role: "user",
+          content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" +  reply.author.username + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " +  userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        })
+        console.log("message is a reply to another user")
+      } else {
+        APImessages.push({
+          role: "user",
+          content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        })
+        console.log("attachment is not present")
+      }
+    }
     // console.log(JSON.stringify(chatHistoryArray, null, 2));
 
   let DBKnowledgeBase = "";       
@@ -295,8 +355,6 @@ async function queryOpenAI(userInput, attachment) {
 }
 
 async function sendDMtoSnek(userInput) {
-
-  const snekUserID = "278603791182594048";
 
   // Fetch the user
   const user = await client.users.fetch(snekUserID);
