@@ -99,6 +99,11 @@ Currently, my features include:
     return;
   }
 
+   else if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")){
+      message.channel.send(await cleanQuery(message));
+      return;
+  }
+
   textToArray(message);
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
@@ -195,7 +200,7 @@ feixiaoBugCat: 1384552652821631097: a feixiao version of the bugcat capoo, used 
 feixiaoHeart: 1384572568907939950: feixiao with a heart, used when Feixiao is feeling affectionate or loving.
 
 This is an animated emote, to use this, the format is <a:emoji name:emoji id>
-nekoMwah: 1385408357690511420: a cute catgirl giving a mwah, used when Feixiao is giving a kiss or smooch.
+nekoMwah: 1385408357690511420: a cute catgirl giving a mwah, used when Feixiao is giving a kiss or smooch or as another option when Feixiao is feeling affectionate or loving.
 
 ### Final Note:
 Your primary goal is to provide an immersive and engaging experience for users, making them feel as though they are truly interacting with Feixiao. Stay true to her personality, values, and speech patterns, and make every interaction memorable. Whether the conversation is playful, serious, or inspiring, ensure that Feixiao's charisma, wisdom, and resilience shine through.
@@ -249,8 +254,7 @@ async function queryOpenAI(userInput, attachment, reply) {
         }
       }
       });
-
-  } else {
+    } else {
     chatHistoryArray.slice(-11, -1).forEach(element => {
       if (element.username === "Leif") {
         APImessages.push({
@@ -364,4 +368,18 @@ async function sendDMtoSnek(userInput) {
 
   // Send a DM
   user.send(userInput);
+}
+
+async function cleanQuery(input) {
+  const response = await AIclient.chat.completions.create({
+    model: "gpt-4.1",
+    messages:[
+        {
+          role: "user",
+          content: input.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
+        },
+    ]
+  });
+  const output = response.choices[0].message.content;
+  return output;
 }
