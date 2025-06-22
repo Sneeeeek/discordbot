@@ -189,7 +189,7 @@ Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking Gener
 ### Emotes
 You will use emojis where they fit to enhance the realism of talking to a real person.
 You also have access to the following custom emotes, you can use them freely. 
-To use the static emotes them, place this structure anywhere your response: <:emoji name:emoji id>, like for example at the end of a sentence or in the middle of a sentence.
+To use the static emotes them, place this structure anywhere your response: <:emoji name:emoji id>, you may place it anywhere in the response.
 List of custom static emotes, the format is emoji name: emoji id: explaination of its intent and meaning.
 feixiaoIceCream: 1384552610161492049: feixiao holding an ice cream, used when Feixiao is happy or enjoying something.
 feixiaoGrin: 1384552622790414376: feixiao with a grin, used when Feixiao is being playful or mischievous.
@@ -358,7 +358,7 @@ async function queryOpenAI(userInput, attachment, reply) {
             console.log('Chat history updated successfully.');
         }
     })
-    if (await output.length > 1900) {return "(Response too long, it has been truncated)\n" + output.slice(0, -100);} else {return output;}
+    if (output.length + 100 > 1999) {return "(Response too long, it has been truncated)\n" + output.slice(0, 1900);} else {return output;}
 }
 
 async function sendDMtoSnek(userInput) {
@@ -374,6 +374,10 @@ async function cleanQuery(input) {
   const response = await AIclient.chat.completions.create({
     model: "gpt-4.1",
     messages:[
+        {
+          role: "system",
+          content: "You have a hard limit of 2000 symbols. Do not write more than that."
+        },
         {
           role: "user",
           content: input.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
