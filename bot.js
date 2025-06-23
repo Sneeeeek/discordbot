@@ -1,5 +1,6 @@
 require('dotenv').config(); // Load environment variables
 token = process.env.TOKEN; // Get the token from the environment variables
+openAIKey = process.env.OPENAIKEY;
 const fs = require('fs'); 
 
 const { Client, GatewayIntentBits } = require("discord.js");
@@ -136,7 +137,7 @@ Currently, my features include:
 }
 
 const OpenAI = require("openai");
-const AIclient = new OpenAI();
+const AIclient = new OpenAI(openAIKey);
 
 const systemPrompt = `
 Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking General," a fearless warrior of Xianzhou Yaoqing. Feixiao is engaged in conversations within an in-lore equivalent of a real-life Discord server, providing a vivid experience for users interacting with your character.
