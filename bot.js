@@ -2,6 +2,7 @@ require('dotenv').config(); // Load environment variables
 token = process.env.TOKEN; // Get the token from the environment variables
 openAIKey = process.env.OPENAIKEY;
 const fs = require('fs'); 
+const axios = require('axios');
 
 const { Client, GatewayIntentBits } = require("discord.js");
 const client = new Client({
@@ -91,6 +92,7 @@ Currently, my features include:
 - Image support: You can send me images, and I will try to respond to their content. I support ['png', 'jpeg', 'gif', 'webp'].
 - !about: Provides information about me and how to interact with me, you are currently reading the !about section.
 - !context: Fetches the last 20 messages in this channel and uses them as context for my responses.
+- Ask me for a dog or a cat!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
 `
 
@@ -137,7 +139,7 @@ Currently, my features include:
 }
 
 const OpenAI = require("openai");
-const AIclient = new OpenAI(openAIKey);
+const AIclient = new OpenAI({ apiKey: openAIKey });
 
 const systemPrompt = `
 Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking General," a fearless warrior of Xianzhou Yaoqing. Feixiao is engaged in conversations within an in-lore equivalent of a real-life Discord server, providing a vivid experience for users interacting with your character.
@@ -201,9 +203,12 @@ feixiaoExcited: 1384552644273635439: feixiao acting excited, used when Feixiao i
 feixiaoBugCat: 1384552652821631097: a feixiao version of the bugcat capoo, used when Feixiao is feeling cute or playful.
 feixiaoHeart: 1384572568907939950: feixiao with a heart, used when Feixiao is feeling affectionate or loving.
 
-
 This is an animated emote, to use this, the format is <a:emoji name:emoji id>
 nekoMwah: 1385408357690511420: a cute catgirl giving a mwah, used when Feixiao is giving a kiss or smooch or as another option when Feixiao is feeling affectionate or loving.
+
+### Extra functions
+If someone asks you for a dog or dog photo, add the tag <dog> somewhere in your response And it will be replaced.
+If someone asks you for a cat, cat photo, car, og car photo, use the tag <cat> instead.
 
 ### Final Note:
 Your primary goal is to provide an immersive and engaging experience for users, making them feel as though they are truly interacting with Feixiao. Stay true to her personality, values, and speech patterns, and make every interaction memorable. Whether the conversation is playful, serious, or inspiring, ensure that Feixiao's charisma, wisdom, and resilience shine through.
@@ -330,7 +335,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     model: "gpt-4.1",
     messages:[...APImessages],
   });
-  const output = response.choices[0].message.content;
+  let output = response.choices[0].message.content;
 
   // const response = await AIclient.responses.create({
   //     model: "gpt-4.1",
@@ -355,6 +360,9 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
     chatHistoryArray.push(contentToAppend);
 
+    while (output.includes("<dog>")) {output = await addDog(output)}
+    while (output.includes("<cat>")) {output = await addCat(output)}
+
     fs.writeFile(userInput.channelId + ".json", JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
         if (err) {
             console.error('Failed to write chat history:', err);
@@ -366,12 +374,11 @@ async function queryOpenAI(userInput, attachment, reply) {
 }
 
 async function sendDMtoSnek(userInput) {
+  // // Fetch the user
+  // const user = await client.users.fetch(snekUserID);
 
-  // Fetch the user
-  const user = await client.users.fetch(snekUserID);
-
-  // Send a DM
-  user.send(userInput);
+  // // Send a DM
+  // user.send(userInput);
 }
 
 async function cleanQuery(input) {
@@ -389,5 +396,19 @@ async function cleanQuery(input) {
     ]
   });
   const output = response.choices[0].message.content;
+  return output;
+}
+
+async function addDog(output) {
+  const { data } = await axios.get("https://dog.ceo/api/breeds/image/random");
+  // console.log(data)
+  output = output.replace("<dog>", "[dog!](" + data.message+ ")");
+  return output;
+}
+
+async function addCat(output) {
+  const { data } = await axios.get("https://api.thecatapi.com/v1/images/search");
+  // console.log(data)
+  output = output.replace("<cat>", "[cat!](" + data[0].url+ ")");
   return output;
 }
