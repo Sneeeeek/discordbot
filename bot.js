@@ -1,5 +1,5 @@
 require('dotenv').config(); // Load environment variables
-token = process.env.TOKEN; // Get the token from the environment variables
+token = process.env.DISCORDTOKEN; // Get the token from the environment variables
 openAIKey = process.env.OPENAIKEY;
 const fs = require('fs'); 
 const axios = require('axios');
@@ -18,8 +18,12 @@ let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
 
 function textToArray(message) {
-    let filePath = message.channelId + ".json";
+    let filePath = "chatHistory/" + message.channelId + ".json";
     console.log(filePath);
+
+    if (!fs.existsSync("chatHistory")) {
+    fs.mkdirSync("chatHistory");
+    }
 
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, '', 'utf8');
@@ -371,7 +375,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     while (output.includes("<dog>")) {output = await addDog(output)}
     while (output.includes("<cat>")) {output = await addCat(output)}
 
-    fs.writeFile(userInput.channelId + ".json", JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
+    fs.writeFile("chatHistory/" + userInput.channelId + ".json", JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
         if (err) {
             console.error('Failed to write chat history:', err);
         } else {
