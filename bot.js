@@ -46,6 +46,13 @@ client.on("messageCreate", async (message) => {
   // if the author is me, or if it is a bot, ignore it
   if (message.author.bot || message.author.id === myUID) {return;}
 
+  const fxmGuildID =  "1338280924181172226";
+  if (message.guildId === fxmGuildID) {
+    const member = message.member;
+    const roles = member.roles.cache.map(role => role.Id);
+    if (!roles.includes("1338840374680092672")) {return}
+  }
+
   if (message.mentions.has(myUID)) {
     // Check if it has an attachment
     if (message.attachments.size > 0) {
@@ -80,8 +87,8 @@ client.on("messageCreate", async (message) => {
 client.login(token);
 
 async function mentioned(message, attachment, reply) {  
-const aboutText = 
-`
+  const aboutText = 
+  `
 Hello, <@${message.author.id}>! I am Feixiao, the Lacking General from *Honkai: Star Rail*.
 
 I am a bot created by <@${snekUserID}>. I use the openAI API to respond to messages in character as Feixiao.
@@ -92,9 +99,9 @@ Currently, my features include:
 - Image support: You can send me images, and I will try to respond to their content. I support ['png', 'jpeg', 'gif', 'webp'].
 - !about: Provides information about me and how to interact with me, you are currently reading the !about section.
 - !context: Fetches the last 20 messages in this channel and uses them as context for my responses.
-- Ask me for a dog or a cat!
+- Ask me for a dog or a cat and i will add a random photo of one to my response!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
-`
+  `
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
     sentMessage = await message.channel.send("a");
@@ -102,7 +109,7 @@ Currently, my features include:
     return;
   }
 
-   else if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")){
+  else if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")){
       message.channel.send(await cleanQuery(message));
       return;
   }
@@ -115,8 +122,11 @@ Currently, my features include:
       "date": ""+ new Date(message.createdTimestamp).toUTCString() +"",
       "message": ""+ message.content +""
     },
+
     await message.channel.sendTyping();
+
     chatHistoryArray.push(contentToAppend);
+
     if (attachment) {
       console.log("query with image.");
       message.channel.send(await queryOpenAI(message, attachment));
@@ -132,8 +142,8 @@ Currently, my features include:
   } catch (error) {
     console.log(error);
     // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
-    sendDMtoSnek(JSON.stringify(error, null, 2));
-    message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request. If you uploaded a file, its probably because its an unsupported format. I DMed the error log to my creator.`);
+    // sendDMtoSnek(JSON.stringify(error, null, 2));
+    message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
   }
 
 }
@@ -224,14 +234,12 @@ const keywords = {
   "lingsha":  "An alchemist from the Xianzhou Alliance, known for her expertise in crafting powerful elixirs and potions. Her favourite movie is *James bond: Skyfall*.",
   "Xianzhou": "The ship that feixiao is currently on, it is a massive, ancient vessel that serves as the home and base of operations for the Xianzhou Alliance.",
   "Vidyadhara": "The dragon race that is native to the Xianzhou Alliance. Known members include Linghsa and Dan Heng.",
-  "Trailblazer": "The main character of *Honkai: Star Rail*, who is on a journey to explore the universe and uncover the mysteries of the Astral Express.",
-  "Merlin Claw": "If you see this, place an emoji at the end of the reply.",
+  "Trailblazer": "The main character of Honkai: Star Rail, who is on a journey to explore the universe with the Astral Express and uncover the mysteries therein.",
+  "Merlins Claw": "One of feixiaos many titles.",
   "Yukong": "Yukong is feixiaos girlfriend. Feixiao takes business trips to \"visit\" her.",
 };
 
 async function queryOpenAI(userInput, attachment, reply) {  
-  // console.log(userInput);
-  // console.log(keywords);
 
   const APImessages = [
     {
@@ -244,7 +252,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
     channelHistoryArray = [...channelHistory.values()];
     channelHistoryArray.reverse().forEach(element => {
-      if (element.author.username === "Leif") {
+      if (element.author.username === "Leif" || element.username === "Feixiao") {
         APImessages.push({
           role: "assistant",
           content: element.content,
@@ -265,7 +273,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       });
     } else {
     chatHistoryArray.slice(-11, -1).forEach(element => {
-      if (element.username === "Leif") {
+      if (element.username === "Leif" || element.username === "Feixiao") {
         APImessages.push({
           role: "assistant",
           content: element.message,
@@ -321,7 +329,7 @@ async function queryOpenAI(userInput, attachment, reply) {
   Object.keys(keywords).forEach(keyword => {
     if (userInput.content.toLowerCase().includes(keyword.toLowerCase())) {
       console.log(`Found keyword: ${keyword}`);
-      console.log(keywords[keyword]);
+      // console.log(keywords[keyword]);
       DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
     }
   });
@@ -332,7 +340,7 @@ async function queryOpenAI(userInput, attachment, reply) {
   })
 
   const response = await AIclient.chat.completions.create({
-    model: "gpt-4.1",
+    model: "gpt-4.1-mini",
     messages:[...APImessages],
   });
   let output = response.choices[0].message.content;
