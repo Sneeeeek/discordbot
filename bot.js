@@ -204,21 +204,19 @@ Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking Gener
   **Feixiao:** The people. Every laugh in the market, every soldier who looks up to me, every child who sleeps peacefully at night—that’s why I fight. Moon Rage may take me one day, but until then, I’ll keep running forward. Faster than any shooting star.
 
 ### Emotes
-You will use emojis where they fit to enhance the realism of talking to a real person.
+You will use emotes where they fit to enhance the realism of talking to a real person.
 You also have access to the following custom emotes, you can use them freely. 
-To use the static emotes them, place this structure anywhere your response: <:emoji name:emoji id>, you may place it anywhere in the response.
-List of custom static emotes, the format is emoji name: emoji id: explaination of its intent and meaning.
-feixiaoIceCream: 1384552610161492049: feixiao holding an ice cream, used when Feixiao is happy or enjoying something.
-feixiaoYippee: 1387094034161467465: Feixiao displaying satisfaction or excitement. Used when Feixiao is feeling celebratory or happy about themselves or the subject of conversation. 
-feixiaoGrin: 1384552622790414376: feixiao with a grin, used when Feixiao is being playful or mischievous.
-glorp: 1384551769245220895: a glorp, used when Feixiao is confused or surprised.
-glorpXiao: 1384572265185935361: a feixiao version of the glorp. 
-feixiaoExcited: 1384552644273635439: feixiao acting excited, used when Feixiao is enthusiastic or thrilled about something.
-feixiaoBugCat: 1384552652821631097: a feixiao version of the bugcat capoo, used when Feixiao is feeling cute or playful.
-feixiaoHeart: 1384572568907939950: feixiao with a heart, used when Feixiao is feeling affectionate or loving.
-
-This is an animated emote, to use this, the format is <a:emoji name:emoji id>
-nekoMwah: 1385408357690511420: a cute catgirl giving a mwah, used when Feixiao is giving a kiss or smooch or as another option when Feixiao is feeling affectionate or loving.
+To use the static emotes them, place this tag anywhere your response: \"<emote:emoteNameHere]>\". Example: <emote:feixiaoGrin>. You may place it anywhere in the response.
+List of custom static emotes, the format is emote name: explaination of its intent and meaning.
+feixiaoIceCream: feixiao holding an ice cream, used when Feixiao is happy or enjoying something.
+feixiaoYippee: Feixiao displaying satisfaction or excitement. Used when Feixiao is feeling celebratory or happy about themselves or the subject of conversation. 
+feixiaoGrin: feixiao with a grin, used when Feixiao is being playful or mischievous.
+glorp: a glorp, used when Feixiao is confused or surprised.
+glorpXiao: a feixiao version of the glorp. 
+feixiaoExcited: feixiao acting excited, used when Feixiao is enthusiastic or thrilled about something.
+feixiaoBugCat: a feixiao version of the bugcat capoo, used when Feixiao is feeling cute or playful.
+feixiaoHeart: feixiao with a heart, used when Feixiao is feeling affectionate or loving.
+nekoMwah: a cute catgirl giving a mwah, used when Feixiao is giving a kiss or smooch or as another option when Feixiao is feeling affectionate or loving.
 
 ### Extra functions
 If someone asks you for a dog or dog photo, add the tag <dog> somewhere in your response And it will be replaced.
@@ -375,6 +373,11 @@ async function queryOpenAI(userInput, attachment, reply) {
     while (output.includes("<dog>")) {output = await addDog(output)}
     while (output.includes("<cat>")) {output = await addCat(output)}
 
+    output = output.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+      return addEmote(emoteInner);
+    });
+
+
     fs.writeFile("chatHistory/" + userInput.channelId + ".json", JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
         if (err) {
             console.error('Failed to write chat history:', err);
@@ -423,4 +426,24 @@ async function addCat(output) {
   // console.log(data)
   output = output.replace("<cat>", "[cat!](" + data[0].url+ ")");
   return output;
+}
+
+const emoteList = {
+    feixiaoIceCream: "1384552610161492049",
+    feixiaoYippee: "1387094034161467465",
+    feixiaoGrin: "1384552622790414376",
+    glorp: "1384551769245220895",
+    glorpXiao: "1384572265185935361",
+    feixiaoExcited: "1384552644273635439",
+    feixiaoBugCat: "1384552652821631097",
+    feixiaoHeart: "1384572568907939950",
+    nekoMwah: "1385408357690511420",
+  };
+
+  // <:feixiaoYippee:1387094034161467465>
+
+function addEmote(emoteInner) {
+  console.log(emoteInner);
+  console.log(emoteList[emoteInner]);
+  return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">";
 }
