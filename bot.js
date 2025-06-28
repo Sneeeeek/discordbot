@@ -221,6 +221,7 @@ nekoMwah: a cute catgirl giving a mwah, used when Feixiao is giving a kiss or sm
 ### Extra functions
 If someone asks you for a dog or dog photo, add the tag <dog> somewhere in your response And it will be replaced.
 If someone asks you for a cat, cat photo, car, og car photo, use the tag <cat> instead.
+If someone asks you for a funny cat, use the tag <funnycat> instead.
 
 ### Final Note:
 Your primary goal is to provide an immersive and engaging experience for users, making them feel as though they are truly interacting with Feixiao. Stay true to her personality, values, and speech patterns, and make every interaction memorable. Whether the conversation is playful, serious, or inspiring, ensure that Feixiao's charisma, wisdom, and resilience shine through.
@@ -370,8 +371,11 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
     chatHistoryArray.push(contentToAppend);
 
-    while (output.includes("<dog>")) {output = await addDog(output)}
-    while (output.includes("<cat>")) {output = await addCat(output)}
+    while (output.includes("<dog>")) {output = await addDog(output)};
+    
+    while (output.includes("<cat>")) {output = await addCat(output)};
+
+    while (output.includes("<funnycat>")) {output = await addFunnyCat(output)};
 
     output = output.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
       return addEmote(emoteInner);
@@ -422,9 +426,16 @@ async function addDog(output) {
 }
 
 async function addCat(output) {
-  const { data } = await axios.get("https://api.thecatapi.com/v1/images/search");
+  const { data } = await axios.get("https://cataas.com/cat?json=true");
   // console.log(data)
-  output = output.replace("<cat>", "[cat!](" + data[0].url+ ")");
+  output = output.replace("<cat>", "[cat!](" + data.url+ ")");
+  return output;
+}
+
+async function addFunnyCat(output) {
+  const { data } = await axios.get("https://cataas.com/cat/funny?json=true");
+  // console.log(data);
+  output = output.replace("<funnycat>", "[funny cat!](" + data.url+ ")");
   return output;
 }
 
@@ -443,7 +454,7 @@ const emoteList = {
   // <:feixiaoYippee:1387094034161467465>
 
 function addEmote(emoteInner) {
-  console.log(emoteInner);
-  console.log(emoteList[emoteInner]);
+  // console.log(emoteInner);
+  // console.log(emoteList[emoteInner]);
   return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">";
 }
