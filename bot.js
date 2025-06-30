@@ -113,9 +113,11 @@ Currently, my features include:
     return;
   }
 
-  else if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")){
-      message.channel.send(await cleanQuery(message));
-      return;
+  const cleanWhiteList = ["278603791182594048"]
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")){
+    if (cleanWhiteList.includes(message.author.id)) {message.channel.send(await cleanQuery(message));} else {message.channel.send("You do not have permission to use this command.");}
+    return;
   }
 
   textToArray(message);
@@ -343,7 +345,7 @@ async function queryOpenAI(userInput, attachment, reply) {
   })
 
   const response = await AIclient.chat.completions.create({
-    model: "gpt-4.1-mini",
+    model: "gpt-4.1",
     messages:[...APImessages],
   });
   let output = response.choices[0].message.content;
