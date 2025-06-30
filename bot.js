@@ -428,14 +428,14 @@ async function addDog(output) {
 }
 
 async function addCat(output) {
-  const { data } = await axios.get("https://cataas.com/cat?json=true");
+  const { data } = await axios.get("https://cataas.com/cat?json=truetype=medium");
   // console.log(data)
   output = output.replace("<cat>", "[cat!](" + data.url+ ")");
   return output;
 }
 
 async function addFunnyCat(output) {
-  const { data } = await axios.get("https://cataas.com/cat/funny?json=true");
+  const { data } = await axios.get("https://cataas.com/cat/funny?json=true&type=medium");
   // console.log(data);
   output = output.replace("<funnycat>", "[funny cat!](" + data.url+ ")");
   return output;
