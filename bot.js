@@ -493,7 +493,8 @@ const emoteList = {
 function addEmote(emoteInner) {
   // console.log(emoteInner);
   // console.log(emoteList[emoteInner]);
-  return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">";
+  if (emoteInner == "nekoMwah") {  return "<a:" + emoteInner + ":" + emoteList[emoteInner] + ">";}
+  else {return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">";}
 }
 
 // const teamText = `
