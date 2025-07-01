@@ -54,7 +54,7 @@ client.on("messageCreate", async (message) => {
   if (message.guildId === fxmGuildID) {
     const member = message.member;
     const roles = member.roles.cache.map(role => role.Id);
-    if (!roles.includes("1338840374680092672")) {return}
+    if (!roles.includes("1338840374680092672")) {return};
   }
 
   if (message.mentions.has(myUID)) {
@@ -151,7 +151,7 @@ Currently, my features include:
     // sendDMtoSnek(JSON.stringify(error, null, 2));
     message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
   }
-
+  // console.log(chatHistoryArray[1])
 }
 
 const OpenAI = require("openai");
@@ -234,6 +234,27 @@ YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIM
 Connect clauses directly, don't use em dashes. 
 `;
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
+// If someone asks you for advice on feixiao, DO NOT ANSWER IT. JUST ADD THE <build> TAG WHEN THEY ARE RELEVANT. PLACE ONLY THE <build> TAG. The tag will be replaced with brief writeups on builds or teams.
+
+const buildText = `
+Light cones:
+- Sig > Dr. Ratio sig > Topaz Sig > Cruising in the stellar sea.
+
+Relic sets:
+- Valorous or Eagle (depending on situation) > Grand duke > misc 2p2p.
+
+Planars:
+- Duran > Izumo (if 2 hunt) >= Inert salsotto.
+
+Main stats:
+- Crit rate body is better. Feixiao has plenty of sources of crit dmg in her kit and teams. Its normal and expected to have an in-menu crit ratio that looks lobsided towards crit rate.
+- ATK and SPD shoes perform about the same, pick depending on situation. Common speed breakpoints are either base (112) speed, 134, or 160 speed. Remember that march 7th gives 10% speed.
+- Wind DMG bonus sphere generally performs slightly better, but atk sphere is also fine.
+- ATK rope. There is no other option.
+
+Teams:
+- Feixiaos current bis team is Feixiao, Cipher, Robin, and Aventurine/Hyacine.
+`;
 
 const keywords = {
   "lingsha":  "An alchemist from the Xianzhou Alliance, known for her expertise in crafting powerful elixirs and potions. Her favourite movie is *James bond: Skyfall*.",
@@ -241,7 +262,8 @@ const keywords = {
   "Vidyadhara": "The dragon race that is native to the Xianzhou Alliance. Known members include Linghsa and Dan Heng.",
   "Trailblazer": "The main character of Honkai: Star Rail, who is on a journey to explore the universe with the Astral Express and uncover the mysteries therein.",
   "Merlins Claw": "One of feixiaos many titles.",
-  "Yukong": "Yukong is feixiaos girlfriend. Feixiao takes business trips to \"visit\" her.",
+  "Yukong": "Yukong is feixiaos girlfriend. Feixiao takes business trips to visit her.",
+  "build": buildText
 };
 
 async function queryOpenAI(userInput, attachment, reply) {  
@@ -282,6 +304,12 @@ async function queryOpenAI(userInput, attachment, reply) {
         APImessages.push({
           role: "assistant",
           content: element.message,
+        })
+      } else if (element.username === "system") {
+        console.log("system message is included");
+        APImessages.push({
+          role: "user",
+          content: element.username + ":" + element.content,
         })
       } else {
         APImessages.push({
@@ -335,6 +363,10 @@ async function queryOpenAI(userInput, attachment, reply) {
     if (userInput.content.toLowerCase().includes(keyword.toLowerCase())) {
       console.log(`Found keyword: ${keyword}`);
       // console.log(keywords[keyword]);
+      if (keyword === "build") {
+        chatHistoryArray.push({"username":"system", "content": keywords[keyword]});
+        DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
+      }
       DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
     }
   });
@@ -373,11 +405,14 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
     chatHistoryArray.push(contentToAppend);
 
+    // animal tags
     while (output.includes("<dog>")) {output = await addDog(output)};
-    
     while (output.includes("<cat>")) {output = await addCat(output)};
-
     while (output.includes("<funnycat>")) {output = await addFunnyCat(output)};
+
+    // feixiao info tags
+    // while (output.includes("<build>")) {output = await addBuild(output)};
+    // while (output.includes("<team>")) {output = await addTeam(output)};
 
     output = output.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
       return addEmote(emoteInner);
@@ -460,3 +495,17 @@ function addEmote(emoteInner) {
   // console.log(emoteList[emoteInner]);
   return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">";
 }
+
+// const teamText = `
+// Feixiaos current bis team is Feixiao, Cipher, Robin, and Aventurine/Hyacine.
+// `;
+
+// function addBuild(output) {
+//   output = output.replace("<build>", buildText);
+//   return output;
+// }
+
+// function addTeam(output) {
+//   output = output.replace("<team>", teamText);
+//   return output;
+// }
