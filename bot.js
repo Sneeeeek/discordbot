@@ -236,24 +236,26 @@ Connect clauses directly, don't use em dashes.
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
 // If someone asks you for advice on feixiao, DO NOT ANSWER IT. JUST ADD THE <build> TAG WHEN THEY ARE RELEVANT. PLACE ONLY THE <build> TAG. The tag will be replaced with brief writeups on builds or teams.
 
-const buildText = `BUILD INFO: 
+const buildText = `FEIXIAOS BUILD INFO: 
 Light cones:
 - Sig > Dr. Ratio sig > Topaz Sig > Cruising in the stellar sea.
 
 Relic sets:
-- Valorous or Eagle (depending on situation) > Grand duke > misc 2p2p.
+- 4p Valorous or Eagle (depending on situation) > 4p Grand duke > misc 2p2p.
 
 Planars:
 - Duran > Izumo (if 2 hunt) >= Inert salsotto.
 
 Main stats:
 - Crit rate body is better. Feixiao has plenty of sources of crit dmg in her kit and teams. Its normal and expected to have an in-menu crit ratio that looks lobsided towards crit rate.
-- ATK and SPD shoes perform about the same, pick depending on situation. Common speed breakpoints are either base (112) speed, 134, or 160 speed. Remember that march 7th gives 10% speed.
+- ATK and SPD shoes perform about the same, pick depending on situation. Common speed breakpoints are either base (112) speed, 134, or 160 speed. Remember that march 7th and Ruan Mei give some speed.
 - Wind DMG bonus sphere generally performs slightly better, but atk sphere is also fine.
 - ATK rope. There is no other option.
 
-Teams:
-- Feixiaos current bis team is Feixiao, Cipher, Robin, and Aventurine/Hyacine.
+Team options:
+- Sub-DPS: Cipher > Topaz or Moze > March 7th.
+- Amplifier: Robin > Tribbie (compensates for feixiaos lack of AOE) >> Sunday or Bronya or Sparkle or a second sub-DPS > Ruan Mei or Pela or Asta or Hanya.
+- Sustain: Hyacine or Aventurine > Lingsha > Huohuo or Fu Xuan or Gallagher > Luocha.
 `;
 
 const keywords = {
