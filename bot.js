@@ -253,8 +253,8 @@ Main stats:
 - ATK rope. There is no other option.
 
 Team options:
-- Sub-DPS: Cipher > Topaz or Moze > March 7th.
-- Amplifier: Robin > Tribbie (compensates for feixiaos lack of AOE) >> Sunday or Bronya or Sparkle or a second sub-DPS > Ruan Mei or Pela or Asta or Hanya.
+- Sub-DPS: Cipher > Topaz or Moze > Hunt March 7th.
+- Amplifier: Robin > Tribbie (compensates a bit for feixiaos lack of AOE) >> Sunday or Bronya or Sparkle or a second sub-DPS > Ruan Mei or Pela or Asta or Hanya.
 - Sustain: Hyacine or Aventurine > Lingsha > Huohuo or Fu Xuan or Gallagher > Luocha.
 `;
 
