@@ -53,7 +53,8 @@ client.on("messageCreate", async (message) => {
   const fxmGuildID =  "1338280924181172226";
   if (message.guildId === fxmGuildID) {
     const member = message.member;
-    const roles = member.roles.cache.map(role => role.Id);
+    const roles = member.roles.cache.map(role => role.id);
+    console.log(roles);
     if (!roles.includes("1339111834635993210")) {
       await message.channel.send("You do not have media permissions.");
       return;
