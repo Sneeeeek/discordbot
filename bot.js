@@ -109,6 +109,7 @@ Currently, my features include:
 - !context: Fetches the last 20 messages in this channel and uses them as context for my responses.
 - Ask me for a dog or a cat and i will add a random photo of one to my response!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
+- Ask me for feixiaos build and i can give you some general advice.
   `
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
