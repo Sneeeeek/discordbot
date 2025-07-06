@@ -50,12 +50,15 @@ client.on("messageCreate", async (message) => {
   // if the author is me, or if it is a bot, ignore it
   if (message.author.bot || message.author.id === myUID) {return;}
 
-  // const fxmGuildID =  "1338280924181172226";
-  // if (message.guildId === fxmGuildID) {
-  //   const member = message.member;
-  //   const roles = member.roles.cache.map(role => role.Id);
-  //   if (!roles.includes("1339111834635993210")) {return};
-  // }
+  const fxmGuildID =  "1338280924181172226";
+  if (message.guildId === fxmGuildID) {
+    const member = message.member;
+    const roles = member.roles.cache.map(role => role.Id);
+    if (!roles.includes("1339111834635993210")) {
+      await message.channel.send("You do not have media permissions.");
+      return;
+    };
+  }
 
   if (message.mentions.has(myUID)) {
     // Check if it has an attachment
