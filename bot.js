@@ -56,7 +56,7 @@ client.on("messageCreate", async (message) => {
     const roles = member.roles.cache.map(role => role.id);
     console.log(roles);
     if (!roles.includes("1339111834635993210")) {
-      await message.channel.send("You do not have media permissions.");
+      await message.channel.send("You do not have the media permissions role.");
       return;
     };
   }
