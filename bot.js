@@ -314,10 +314,10 @@ async function queryOpenAI(userInput, attachment, reply) {
           content: element.message,
         })
       } else if (element.username === "system") {
-        console.log("system message is included");
+        // console.log("system message is included");
         APImessages.push({
-          role: "user",
-          content: element.username + ":" + element.content,
+          role: "system",
+          content: element.content,
         })
       } else {
         APImessages.push({
