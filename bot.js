@@ -50,6 +50,8 @@ client.on("messageCreate", async (message) => {
   // if the author is me, or if it is a bot, ignore it
   if (message.author.bot || message.author.id === myUID) {return;}
 
+  if (message.mentions.has(myUID)) {
+    
   const fxmGuildID =  "1338280924181172226";
   if (message.guildId === fxmGuildID) {
     const member = message.member;
@@ -60,8 +62,7 @@ client.on("messageCreate", async (message) => {
       return;
     };
   }
-
-  if (message.mentions.has(myUID)) {
+  
     // Check if it has an attachment
     if (message.attachments.size > 0) {
       console.log("there is an attachment");
