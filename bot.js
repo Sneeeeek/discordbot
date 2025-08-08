@@ -1,7 +1,7 @@
 require('dotenv').config(); // Load environment variables
 token = process.env.DISCORDTOKEN; // Get the token from the environment variables
 openAIKey = process.env.OPENAIKEY;
-const fs = require('fs'); 
+const fs = require('fs');
 const axios = require('axios');
 
 const { Client, GatewayIntentBits } = require("discord.js");
@@ -18,26 +18,26 @@ let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
 
 function textToArray(message) {
-    let filePath = "chatHistory/" + message.channelId + ".json";
-    console.log(filePath);
+  let filePath = "chatHistory/" + message.channelId + ".json";
+  console.log(filePath);
 
-    if (!fs.existsSync("chatHistory")) {
+  if (!fs.existsSync("chatHistory")) {
     fs.mkdirSync("chatHistory");
-    }
+  }
 
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, '', 'utf8');
-    }
-    const data = fs.readFileSync(filePath, 'utf-8');
-    
-    if (data.trim() === '') {
-        console.error('File is empty.');
-        chatHistoryArray = [];
-        return;
-    }
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '', 'utf8');
+  }
+  const data = fs.readFileSync(filePath, 'utf-8');
 
-    const chatHistory = JSON.parse(data);
-    chatHistoryArray = [...chatHistory];
+  if (data.trim() === '') {
+    console.error('File is empty.');
+    chatHistoryArray = [];
+    return;
+  }
+
+  const chatHistory = JSON.parse(data);
+  chatHistoryArray = [...chatHistory];
 }
 
 client.on("ready", () => {
@@ -48,21 +48,21 @@ client.on("ready", () => {
 
 client.on("messageCreate", async (message) => {
   // if the author is me, or if it is a bot, ignore it
-  if (message.author.bot || message.author.id === myUID) {return;}
+  if (message.author.bot || message.author.id === myUID) { return; }
 
   if (message.mentions.has(myUID)) {
-    
-  const fxmGuildID =  "1338280924181172226";
-  if (message.guildId === fxmGuildID) {
-    const member = message.member;
-    const roles = member.roles.cache.map(role => role.id);
-    console.log(roles);
-    if (!roles.includes("1339111834635993210")) {
-      await message.channel.send("You do not have the media permissions role.");
-      return;
-    };
-  }
-  
+
+    const fxmGuildID = "1338280924181172226";
+    if (message.guildId === fxmGuildID) {
+      const member = message.member;
+      const roles = member.roles.cache.map(role => role.id);
+      console.log(roles);
+      if (!roles.includes("1339111834635993210")) {
+        await message.channel.send("You do not have the media permissions role.");
+        return;
+      };
+    }
+
     // Check if it has an attachment
     if (message.attachments.size > 0) {
       console.log("there is an attachment");
@@ -88,16 +88,16 @@ client.on("messageCreate", async (message) => {
       } else {
         mentioned(message);
       }
-    // console.log(message);
+      // console.log(message);
     }
   }
 });
 
 client.login(token);
 
-async function mentioned(message, attachment, reply) {  
-  const aboutText = 
-  `
+async function mentioned(message, attachment, reply) {
+  const aboutText =
+    `
 Hello, <@${message.author.id}>! I am Feixiao, the Lacking General from *Honkai: Star Rail*.
 
 I am a bot created by <@${snekUserID}>. I use the openAI API to respond to messages in character as Feixiao.
@@ -121,8 +121,9 @@ Currently, my features include:
 
   const cleanWhiteList = ["278603791182594048"]
 
-  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")){
-    if (cleanWhiteList.includes(message.author.id)) {message.channel.send(await cleanQuery(message));} else {message.channel.send("You do not have permission to use this command.");}
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")) {
+    message.content = message.content.replace("!clean", "")
+    if (cleanWhiteList.includes(message.author.id)) { message.channel.send(await cleanQuery(message)); } else { message.channel.send("You do not have permission to use this command."); }
     return;
   }
 
@@ -130,12 +131,12 @@ Currently, my features include:
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
     contentToAppend = {
-      "username": ""+ message.author.username +"",
-      "date": ""+ new Date(message.createdTimestamp).toUTCString() +"",
-      "message": ""+ message.content +""
+      "username": "" + message.author.username + "",
+      "date": "" + new Date(message.createdTimestamp).toUTCString() + "",
+      "message": "" + message.content + ""
     },
 
-    await message.channel.sendTyping();
+      await message.channel.sendTyping();
 
     chatHistoryArray.push(contentToAppend);
 
@@ -160,8 +161,11 @@ Currently, my features include:
   // console.log(chatHistoryArray[1])
 }
 
+const model = "gpt-5";
 const OpenAI = require("openai");
-const AIclient = new OpenAI({ apiKey: openAIKey });
+const AIclient = new OpenAI({
+  apiKey: openAIKey,
+});
 
 const systemPrompt = `
 Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking General," a fearless warrior of Xianzhou Yaoqing. Feixiao is engaged in conversations within an in-lore equivalent of a real-life Discord server, providing a vivid experience for users interacting with your character.
@@ -265,7 +269,7 @@ Team options:
 `;
 
 const keywords = {
-  "lingsha":  "An alchemist from the Xianzhou Alliance, known for her expertise in crafting powerful elixirs and potions. Her favourite movie is *James bond: Skyfall*.",
+  "lingsha": "An alchemist from the Xianzhou Alliance, known for her expertise in crafting powerful elixirs and potions. Her favourite movie is *James bond: Skyfall*.",
   "Xianzhou": "The ship that feixiao is currently on, it is a massive, ancient vessel that serves as the home and base of operations for the Xianzhou Alliance.",
   "Vidyadhara": "The dragon race that is native to the Xianzhou Alliance. Known members include Linghsa and Dan Heng.",
   "Trailblazer": "The main character of Honkai: Star Rail, who is on a journey to explore the universe with the Astral Express and uncover the mysteries therein.",
@@ -274,14 +278,14 @@ const keywords = {
   "build": buildText
 };
 
-async function queryOpenAI(userInput, attachment, reply) {  
+async function queryOpenAI(userInput, attachment, reply) {
 
   const APImessages = [
     {
       role: "system",
       content: systemPrompt,
     }
-  ]; 
+  ];
 
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
     const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
@@ -305,8 +309,8 @@ async function queryOpenAI(userInput, attachment, reply) {
           })
         }
       }
-      });
-    } else {
+    });
+  } else {
     chatHistoryArray.slice(-11, -1).forEach(element => {
       if (element.username === "Leif" || element.username === "Feixiao") {
         APImessages.push({
@@ -327,52 +331,43 @@ async function queryOpenAI(userInput, attachment, reply) {
       }
     });
 
-      if (attachment) {
-        console.log(attachment);
-        APImessages.push({
-          role: "user",
-          content: [
-              // {
-              //   "type": "input_text", 
-              //   "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-              // },
-              // {
-              //     "type": "input_image",
-              //     "image_url": attachment,
-              // },
-              {
-                "type": "text", 
-                "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-              },
-              {
-                  "type": "image_url",
-                  image_url: { url: attachment},
-              },
-          ],
-        })
-      } else if (reply) {
-        APImessages.push({
-          role: "user",
-          content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" +  reply.author.username + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " +  userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-        })
-        console.log("message is a reply to another user")
-      } else {
-        APImessages.push({
-          role: "user",
-          content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-        })
-        console.log("attachment is not present")
-      }
+    if (attachment) {
+      console.log(attachment);
+      APImessages.push({
+        role: "user",
+        content: [
+          {
+            "type": "text",
+            "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+          },
+          {
+            "type": "image_url",
+            image_url: { url: attachment },
+          },
+        ],
+      })
+    } else if (reply) {
+      APImessages.push({
+        role: "user",
+        content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.author.username + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+      })
+      console.log("message is a reply to another user")
+    } else {
+      APImessages.push({
+        role: "user",
+        content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+      })
+      console.log("attachment is not present")
     }
-    // console.log(JSON.stringify(chatHistoryArray, null, 2));
+  }
 
-  let DBKnowledgeBase = "";       
+  let DBKnowledgeBase = "";
   Object.keys(keywords).forEach(keyword => {
     if (userInput.content.toLowerCase().includes(keyword.toLowerCase())) {
       console.log(`Found keyword: ${keyword}`);
       // console.log(keywords[keyword]);
       if (keyword === "build") {
-        chatHistoryArray.push({"username":"system", "content": keywords[keyword]});
+        chatHistoryArray.push({ "username": "system", "content": keywords[keyword] });
         DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
       }
       DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
@@ -384,57 +379,48 @@ async function queryOpenAI(userInput, attachment, reply) {
     content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
   })
 
+
+
   const response = await AIclient.chat.completions.create({
-    model: "gpt-4.1",
-    messages:[...APImessages],
+    model: model,
+    reasoning_effort: "low",
+    // service_tier: "flex",
+    messages: [...APImessages],
   });
   let output = response.choices[0].message.content;
 
-  // const response = await AIclient.responses.create({
-  //     model: "gpt-4.1",
-      
-  //     input:[...APImessages],
-      
-  //     // tools: [ { type: "web_search_preview" }],
-  //     // tool_choice: "auto"
-  // });
-  // const output = response.output_text;
 
 
-  // console.log(output);
-  // console.log(APImessages)
+  // Append the AI's response to the chat history
+  contentToAppend = {
+    "username": "" + client.user.username + "",
+    "date": "" + new Date(Date.now()).toUTCString() + "",
+    "message": "" + output + ""
+  }
+  chatHistoryArray.push(contentToAppend);
+
+  // animal tags
+  while (output.includes("<dog>")) { output = await addDog(output) };
+  while (output.includes("<cat>")) { output = await addCat(output) };
+  while (output.includes("<funnycat>")) { output = await addFunnyCat(output) };
+
+  // feixiao info tags
+  // while (output.includes("<build>")) {output = await addBuild(output)};
+  // while (output.includes("<team>")) {output = await addTeam(output)};
+
+  output = output.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+    return addEmote(emoteInner);
+  });
 
 
-    // Append the AI's response to the chat history
-    contentToAppend = {
-        "username": ""+ client.user.username +"",
-        "date": ""+ new Date(Date.now()).toUTCString() +"",
-        "message": ""+ output +""
+  fs.writeFile("chatHistory/" + userInput.channelId + ".json", JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
+    if (err) {
+      console.error('Failed to write chat history:', err);
+    } else {
+      console.log('Chat history updated successfully.');
     }
-    chatHistoryArray.push(contentToAppend);
-
-    // animal tags
-    while (output.includes("<dog>")) {output = await addDog(output)};
-    while (output.includes("<cat>")) {output = await addCat(output)};
-    while (output.includes("<funnycat>")) {output = await addFunnyCat(output)};
-
-    // feixiao info tags
-    // while (output.includes("<build>")) {output = await addBuild(output)};
-    // while (output.includes("<team>")) {output = await addTeam(output)};
-
-    output = output.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-      return addEmote(emoteInner);
-    });
-
-
-    fs.writeFile("chatHistory/" + userInput.channelId + ".json", JSON.stringify(chatHistoryArray, null, 2), 'utf-8', (err) => {
-        if (err) {
-            console.error('Failed to write chat history:', err);
-        } else {
-            console.log('Chat history updated successfully.');
-        }
-    })
-    if (output.length + 100 > 1999) {return "(Response too long, it has been truncated)\n" + output.slice(0, 1900);} else {return output;}
+  })
+  if (output.length + 100 > 1999) { return "(Response too long, it has been truncated)\n" + output.slice(0, 1900); } else { return output; }
 }
 
 async function sendDMtoSnek(userInput) {
@@ -447,16 +433,18 @@ async function sendDMtoSnek(userInput) {
 
 async function cleanQuery(input) {
   const response = await AIclient.chat.completions.create({
-    model: "gpt-4.1",
-    messages:[
-        {
-          role: "system",
-          content: "You have a hard limit of 2000 symbols. Do not write more than that."
-        },
-        {
-          role: "user",
-          content: input.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
-        },
+    model: model,
+    reasoning_effort: "low",
+    // service_tier: "flex",
+    messages: [
+      {
+        role: "system",
+        content: "You have a hard limit of 2000 symbols. Do not write more than that."
+      },
+      {
+        role: "user",
+        content: input.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
+      },
     ]
   });
   const output = response.choices[0].message.content;
@@ -466,43 +454,43 @@ async function cleanQuery(input) {
 async function addDog(output) {
   const { data } = await axios.get("https://dog.ceo/api/breeds/image/random");
   // console.log(data)
-  output = output.replace("<dog>", "[dog!](" + data.message+ ")");
+  output = output.replace("<dog>", "[dog!](" + data.message + ")");
   return output;
 }
 
 async function addCat(output) {
   const { data } = await axios.get("https://cataas.com/cat?json=truetype=medium");
   // console.log(data)
-  output = output.replace("<cat>", "[cat!](" + data.url+ ")");
+  output = output.replace("<cat>", "[cat!](" + data.url + ")");
   return output;
 }
 
 async function addFunnyCat(output) {
   const { data } = await axios.get("https://cataas.com/cat/funny?json=true&type=medium");
   // console.log(data);
-  output = output.replace("<funnycat>", "[funny cat!](" + data.url+ ")");
+  output = output.replace("<funnycat>", "[funny cat!](" + data.url + ")");
   return output;
 }
 
 const emoteList = {
-    feixiaoIceCream: "1384552610161492049",
-    feixiaoYippee: "1387094034161467465",
-    feixiaoGrin: "1384552622790414376",
-    glorp: "1384551769245220895",
-    glorpXiao: "1384572265185935361",
-    feixiaoExcited: "1384552644273635439",
-    feixiaoBugCat: "1384552652821631097",
-    feixiaoHeart: "1384572568907939950",
-    nekoMwah: "1385408357690511420",
-  };
+  feixiaoIceCream: "1384552610161492049",
+  feixiaoYippee: "1387094034161467465",
+  feixiaoGrin: "1384552622790414376",
+  glorp: "1384551769245220895",
+  glorpXiao: "1384572265185935361",
+  feixiaoExcited: "1384552644273635439",
+  feixiaoBugCat: "1384552652821631097",
+  feixiaoHeart: "1384572568907939950",
+  nekoMwah: "1385408357690511420",
+};
 
-  // <:feixiaoYippee:1387094034161467465>
+// <:feixiaoYippee:1387094034161467465>
 
 function addEmote(emoteInner) {
   // console.log(emoteInner);
   // console.log(emoteList[emoteInner]);
-  if (emoteInner == "nekoMwah") {  return "<a:" + emoteInner + ":" + emoteList[emoteInner] + ">";}
-  else {return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">";}
+  if (emoteInner == "nekoMwah") { return "<a:" + emoteInner + ":" + emoteList[emoteInner] + ">"; }
+  else { return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">"; }
 }
 
 // const teamText = `
