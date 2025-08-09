@@ -379,7 +379,8 @@ async function queryOpenAI(userInput, attachment, reply) {
     content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
   })
 
-let output;
+  let output;
+  
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!think")) {
     const response = await AIclient.chat.completions.create({
       model: model,
