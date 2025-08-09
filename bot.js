@@ -379,15 +379,26 @@ async function queryOpenAI(userInput, attachment, reply) {
     content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
   })
 
+let output;
+  if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!think")) {
+    const response = await AIclient.chat.completions.create({
+      model: model,
+      reasoning_effort: "medium",
+      // service_tier: "flex",
+      messages: [...APImessages],
+    });
+    output = response.choices[0].message.content;
+    console.log("medium effort");
+  } else {
+    const response = await AIclient.chat.completions.create({
+      model: model,
+      reasoning_effort: "minimal",
+      // service_tier: "flex",
+      messages: [...APImessages],
+    });
+    output = response.choices[0].message.content;
+  }
 
-
-  const response = await AIclient.chat.completions.create({
-    model: model,
-    reasoning_effort: "low",
-    // service_tier: "flex",
-    messages: [...APImessages],
-  });
-  let output = response.choices[0].message.content;
 
 
 
