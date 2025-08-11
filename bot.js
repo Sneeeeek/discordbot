@@ -1,10 +1,13 @@
-require('dotenv').config(); // Load environment variables
-token = process.env.DISCORDTOKEN; // Get the token from the environment variables
-openAIKey = process.env.OPENAIKEY;
-const fs = require('fs');
-const axios = require('axios');
+import dotenv from 'dotenv'; // Load environment variables
+import fs from "fs";
+import axios from "axios";
+import captureWebsite from 'capture-website';
 
-const { Client, GatewayIntentBits } = require("discord.js");
+dotenv.config();
+const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
+const openAIKey = process.env.OPENAIKEY;
+
+import { Client, GatewayIntentBits } from 'discord.js';
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -22,11 +25,11 @@ function textToArray(message) {
   console.log(filePath);
 
   if (!fs.existsSync("chatHistory")) {
-    fs.mkdirSync("chatHistory");
+    fs.mkdir("chatHistory");
   }
 
   if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, '', 'utf8');
+    fs.writeFile(filePath, '', 'utf8');
   }
   const data = fs.readFileSync(filePath, 'utf-8');
 
@@ -61,6 +64,7 @@ client.on("messageCreate", async (message) => {
         await message.channel.send("You do not have the media permissions role.");
         return;
       };
+      if (message.content.startsWith(!web)){return;}
     }
 
     // Check if it has an attachment
@@ -97,7 +101,7 @@ client.login(token);
 
 async function mentioned(message, attachment, reply) {
   const aboutText =
-    `
+  `
 Hello, <@${message.author.id}>! I am Feixiao, the Lacking General from *Honkai: Star Rail*.
 
 I am a bot created by <@${snekUserID}>. I use the openAI API to respond to messages in character as Feixiao.
@@ -112,6 +116,19 @@ Currently, my features include:
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
 - Ask me for feixiaos build and i can give you some general advice.
   `
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!web")) {
+    let matches = message.content.match(/\bhttps?:\/\/\S+/gi);
+    if (matches){
+      let sentMessage = await message.channel.send("Found a link. Processing.");
+      textToArray(message);
+      if(fs.existsSync('screenshot.png')){fs.unlinkSync('screenshot.png')}
+      await captureWebsite.file(matches[0], 'screenshot.png', {fullPage: true, blockAds: true, isJavaScriptEnabled: false});
+      let imageAsBase64 = "data:image/jpeg;base64," + await fs.readFileSync('screenshot.png', 'base64');
+      await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
+    } else {await message.channel.send("There was no link detected.");}
+    return;
+  }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
     sentMessage = await message.channel.send("a");
@@ -130,13 +147,14 @@ Currently, my features include:
   textToArray(message);
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
+    let contentToAppend;
     contentToAppend = {
       "username": "" + message.author.username + "",
       "date": "" + new Date(message.createdTimestamp).toUTCString() + "",
       "message": "" + message.content + ""
     },
 
-      await message.channel.sendTyping();
+    await message.channel.sendTyping();
 
     chatHistoryArray.push(contentToAppend);
 
@@ -162,7 +180,7 @@ Currently, my features include:
 }
 
 const model = "gpt-5";
-const OpenAI = require("openai");
+import OpenAI from "openai";
 const AIclient = new OpenAI({
   apiKey: openAIKey,
 });
@@ -332,7 +350,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     });
 
     if (attachment) {
-      console.log(attachment);
+      console.log(attachment.slice(0,50));
       APImessages.push({
         role: "user",
         content: [
@@ -402,7 +420,7 @@ async function queryOpenAI(userInput, attachment, reply) {
 
 
 
-
+  let contentToAppend
   // Append the AI's response to the chat history
   contentToAppend = {
     "username": "" + client.user.username + "",
