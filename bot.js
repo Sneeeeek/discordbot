@@ -118,22 +118,23 @@ Currently, my features include:
   `
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!web")) {
-    try {
-      let matches = message.content.match(/\bhttps?:\/\/\S+/gi);
-      if (matches){
+    let matches = message.content.match(/\bhttps?:\/\/\S+/gi);
+    if (matches) {
+      try {
         let sentMessage = await message.channel.send("Found a link. Processing.");
         textToArray(message);
-        if(fs.existsSync('chatHistory/screenshot.png')){fs.unlinkSync('chatHistory/screenshot.png')}
-        await captureWebsite.file(matches[0], 'chatHistory/screenshot.png', {fullPage: true, blockAds: true});
+        if (fs.existsSync('chatHistory/screenshot.png')) { fs.unlinkSync('chatHistory/screenshot.png') }
+        await captureWebsite.file(matches[0], 'chatHistory/screenshot.png', { fullPage: true, blockAds: true });
         let imageAsBase64 = "data:image/jpeg;base64," + await fs.readFileSync('chatHistory/screenshot.png', 'base64');
-        await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
-      } else {
-        await message.channel.send("There was no link detected.");
+      } catch (error) {
+        message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
+        return;
       }
-      return;
-    } catch (error) {
-      message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
+      await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
+    } else {
+      await message.channel.send("There was no link detected.");
     }
+    return;
   }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
