@@ -123,7 +123,7 @@ Currently, my features include:
       let sentMessage = await message.channel.send("Found a link. Processing.");
       textToArray(message);
       if(fs.existsSync('screenshot.png')){fs.unlinkSync('screenshot.png')}
-      await captureWebsite.file(matches[0], 'screenshot.png', {fullPage: true, blockAds: true, isJavaScriptEnabled: false});
+      await captureWebsite.file(matches[0], 'screenshot.png', {fullPage: true, blockAds: true});
       let imageAsBase64 = "data:image/jpeg;base64," + await fs.readFileSync('screenshot.png', 'base64');
       await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
     } else {await message.channel.send("There was no link detected.");}
@@ -416,6 +416,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       messages: [...APImessages],
     });
     output = response.choices[0].message.content;
+    // console.log(response);
   }
 
 
