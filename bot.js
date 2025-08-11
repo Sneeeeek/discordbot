@@ -131,7 +131,7 @@ Currently, my features include:
         message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
         return;
       }
-      // await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
+      await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
     } else {
       await message.channel.send("There was no link detected.");
     }
