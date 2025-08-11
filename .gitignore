@@ -140,3 +140,4 @@ dist
 !package-lock.json
 screenshot.png
 engine.bin
+chatHistory/screenshot.jpeg
