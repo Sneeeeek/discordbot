@@ -270,6 +270,9 @@ DO NOT USE "—", DO NOT USE THE EM DASH at all.
 YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
 YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
 Connect clauses directly, don't use em dashes. 
+Keep your responses on the briefer side unless the lenght is required.
+WHEN WRITING CODE, USE MARKDOWN CODE BLOCKS.
+Use markdown where appropriate.
 `;
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
 // If someone asks you for advice on feixiao, DO NOT ANSWER IT. JUST ADD THE <build> TAG WHEN THEY ARE RELEVANT. PLACE ONLY THE <build> TAG. The tag will be replaced with brief writeups on builds or teams.
