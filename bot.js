@@ -117,26 +117,25 @@ Currently, my features include:
 - Ask me for feixiaos build and i can give you some general advice.
   `
 
-  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!web")) {
-    let matches = message.content.match(/\bhttps?:\/\/\S+/gi);
-    if (matches) {
-    let sentMessage;
-    let imageAsBase64;
-      try {
-        sentMessage = await message.channel.send("Found a link. Processing.");
-        textToArray(message);
-        await captureWebsite.file(matches[0], 'chatHistory/screenshot.jpeg', { fullPage: true, blockAds: true, overwrite: true, type: 'jpeg' });
-        imageAsBase64 = "data:image/jpeg;base64," + await fs.readFileSync('chatHistory/screenshot.jpeg', 'base64');
-      } catch (error) {
-        message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
-        return;
-      }
-      await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
-    } else {
-      await message.channel.send("There was no link detected.");
-    }
-    return;
-  }
+  // if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!web")) {
+  //   let matches = message.content.match(/\bhttps?:\/\/\S+/gi);
+  //   if (matches) {
+  //   let sentMessage;
+  //   let imageAsBase64;
+  //     try {
+  //       sentMessage = await message.channel.send("Found a link. Processing.");
+  //       textToArray(message);
+  //       // imageAsBase64 = "data:image/jpeg;base64," + await fs.readFileSync('chatHistory/screenshot.jpeg', 'base64');
+  //       await sentMessage.edit(await queryOpenAI(message, "data:image/jpeg;base64," + await captureWebsite.base64(matches[0], { fullPage: true, blockAds: true, overwrite: true, type: 'jpeg' })));
+  //     } catch (error) {
+  //       message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
+  //       return;
+  //     }
+  //   } else {
+  //     await message.channel.send("There was no link detected.");
+  //   }
+  //   return;
+  // }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
     sentMessage = await message.channel.send("a");
