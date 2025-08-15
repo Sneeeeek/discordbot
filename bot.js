@@ -466,7 +466,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       console.log('Chat history updated successfully.');
     }
   })
-  if (output.length + 100 > 1999) { return "(Response too long, it has been truncated)\n" + output.slice(0, 1900); } else { return output; }
+  if (output.length + 50 > 1999) { return "(Response too long, it has been truncated)\n" + output.slice(0, 1950); } else { return output; }
 }
 
 async function sendDMtoSnek(userInput) {
