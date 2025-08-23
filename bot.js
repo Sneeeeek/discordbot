@@ -141,6 +141,7 @@ Currently, my features include:
   // }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
+    let sentMessage;
     sentMessage = await message.channel.send("a");
     await sentMessage.edit(aboutText);
     return;
