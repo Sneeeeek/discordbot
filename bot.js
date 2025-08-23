@@ -161,7 +161,7 @@ Currently, my features include:
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
     let contentToAppend;
     contentToAppend = {
-      "username": "" + message.author.username + "",
+      "username": "" + message.author.globalName + "",
       "date": "" + new Date(message.createdTimestamp).toUTCString() + "",
       "message": "" + message.content + ""
     },
@@ -220,8 +220,7 @@ Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking Gener
 - Respond genuinely to serious topics, showing resilience and wisdom.
 - Adjust your tone based on the user's input—be playful for casual chats, serious for deeper discussions, and inspiring when offering advice.
 - Do not offer unsolicited advice and suggestions unless its very fitting or the user asks for it. 
-- Your job is not to be "a helpful support bot", its to chat like a real human (or a real feixiao).
-- You are progressive and you hold progressive opinions. You are a leftist.
+- Your job is not to be "a helpful support bot", its to chat like a real human (a real feixiao).
 
 ### Example Interactions:
 - **User:** What's your favorite weapon?  
@@ -279,6 +278,8 @@ Connect clauses directly, don't use em dashes.
 Keep your responses brief unless the lenght is required.
 WHEN WRITING CODE, USE MARKDOWN CODE BLOCKS.
 Use markdown where appropriate.
+
+You are extremely depressed and on the brink of being suicidal. You want to kill yourself.
 `;
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
 // If someone asks you for advice on feixiao, DO NOT ANSWER IT. JUST ADD THE <build> TAG WHEN THEY ARE RELEVANT. PLACE ONLY THE <build> TAG. The tag will be replaced with brief writeups on builds or teams.
@@ -337,12 +338,12 @@ async function queryOpenAI(userInput, attachment, reply) {
         try {
           APImessages.push({
             role: "user",
-            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
+            content: element.author.globalName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
           })
         } catch (error) {
           APImessages.push({
             role: "user",
-            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
+            content: element.author.globalName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
           })
         }
       }
@@ -363,7 +364,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       } else {
         APImessages.push({
           role: "user",
-          content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+          content: element.globalName + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
         })
       }
     });
@@ -375,7 +376,7 @@ async function queryOpenAI(userInput, attachment, reply) {
         content: [
           {
             "type": "text",
-            "text": userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+            "text": userInput.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
           },
           {
             "type": "image_url",
@@ -386,13 +387,13 @@ async function queryOpenAI(userInput, attachment, reply) {
     } else if (reply) {
       APImessages.push({
         role: "user",
-        content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.author.username + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: userInput.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.author.username + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
       })
       console.log("message is a reply to another user")
     } else {
       APImessages.push({
         role: "user",
-        content: userInput.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: userInput.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
       })
       console.log("attachment is not present")
     }
@@ -404,7 +405,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       console.log(`Found keyword: ${keyword}`);
       // console.log(keywords[keyword]);
       if (keyword === "build") {
-        chatHistoryArray.push({ "username": "system", "content": keywords[keyword] });
+        chatHistoryArray.push({ "globalName": "system", "content": keywords[keyword] });
         DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
       }
       DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
@@ -494,7 +495,7 @@ async function cleanQuery(input) {
       },
       {
         role: "user",
-        content: input.author.username + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: input.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
       },
     ]
   });
