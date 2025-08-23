@@ -7,7 +7,7 @@ dotenv.config();
 const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
 const openAIKey = process.env.OPENAIKEY;
 
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits, MessageFlags } from 'discord.js';
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -172,15 +172,15 @@ Currently, my features include:
 
     if (attachment) {
       console.log("query with image.");
-      message.channel.send(await queryOpenAI(message, attachment));
+      message.reply({content: await queryOpenAI(message, attachment), allowedMentions: { parse: ["users", "roles"] } });
     }
     else if (reply) {
       console.log("query with reply.");
-      message.channel.send(await queryOpenAI(message, null, reply));
+      message.reply({content: await queryOpenAI(message, null, reply), allowedMentions: { parse: ["users", "roles"] } });
     }
     else {
       console.log("query with no image.");
-      message.channel.send(await queryOpenAI(message));
+      message.reply({content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
     }
   } catch (error) {
     console.log(error);
