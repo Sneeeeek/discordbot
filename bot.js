@@ -29,7 +29,7 @@ function textToArray(message) {
   }
 
   if (!fs.existsSync(filePath)) {
-    fs.writeFile(filePath, '', 'utf8');
+    fs.writeFileSync(filePath, '', 'utf8');
   }
   const data = fs.readFileSync(filePath, 'utf-8');
 
