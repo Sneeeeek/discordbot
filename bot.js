@@ -112,6 +112,7 @@ Currently, my features include:
 - Image support: You can send me images, and I will try to respond to their content. I support ['png', 'jpeg', 'gif', 'webp'].
 - !about: Provides information about me and how to interact with me, you are currently reading the !about section.
 - !context: Fetches the last 20 messages in this channel and uses them as context for my responses.
+- !think: If this command is invoked, i will spend extra time thinking before i give my response.
 - Ask me for a dog or a cat and i will add a random photo of one to my response!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
 - Ask me for feixiaos build and i can give you some general advice.
