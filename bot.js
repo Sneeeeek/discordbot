@@ -161,7 +161,7 @@ Currently, my features include:
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
     let contentToAppend;
     contentToAppend = {
-      "username": "" + message.author.globalName + "",
+      "username": "" + message.member.displayName + "",
       "date": "" + new Date(message.createdTimestamp).toUTCString() + "",
       "message": "" + message.content + ""
     },
@@ -337,12 +337,12 @@ async function queryOpenAI(userInput, attachment, reply) {
         try {
           APImessages.push({
             role: "user",
-            content: element.author.globalName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
+            content: element.member.displayName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
           })
         } catch (error) {
           APImessages.push({
             role: "user",
-            content: element.author.globalName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
+            content: element.member.displayName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
           })
         }
       }
@@ -363,7 +363,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       } else {
         APImessages.push({
           role: "user",
-          content: element.globalName + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+          content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
         })
       }
     });
@@ -375,7 +375,7 @@ async function queryOpenAI(userInput, attachment, reply) {
         content: [
           {
             "type": "text",
-            "text": userInput.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+            "text": userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
           },
           {
             "type": "image_url",
@@ -386,13 +386,13 @@ async function queryOpenAI(userInput, attachment, reply) {
     } else if (reply) {
       APImessages.push({
         role: "user",
-        content: userInput.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.author.username + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.member.displayName + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
       })
       console.log("message is a reply to another user")
     } else {
       APImessages.push({
         role: "user",
-        content: userInput.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
       })
       console.log("attachment is not present")
     }
@@ -404,7 +404,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       console.log(`Found keyword: ${keyword}`);
       // console.log(keywords[keyword]);
       if (keyword === "build") {
-        chatHistoryArray.push({ "globalName": "system", "content": keywords[keyword] });
+        chatHistoryArray.push({ "username": "system", "content": keywords[keyword] });
         DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
       }
       DBKnowledgeBase += keyword + ": " + keywords[keyword] + "\n";
@@ -494,7 +494,7 @@ async function cleanQuery(input) {
       },
       {
         role: "user",
-        content: input.author.globalName + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: input.author.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + input.content.replace(/<@!?(\d+)>/g, '').trim()
       },
     ]
   });
