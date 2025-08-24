@@ -410,7 +410,7 @@ if (reply) {
 
   if(typeof embedPost.embeds[0] != "undefined") {
     console.log("found an embed");
-    console.log(embedPost.embeds[0].data);
+    // console.log(embedPost.embeds[0].data);
 
     switch (embedPost.embeds[0].data.type) {
       case "rich":
