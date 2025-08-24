@@ -387,7 +387,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     } else if (reply) {
       APImessages.push({
         role: "user",
-        content: userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.member.displayName + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.member.displayName + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
       })
       console.log("message is a reply to another user")
     } else {
