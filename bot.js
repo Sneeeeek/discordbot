@@ -181,6 +181,7 @@ Currently, my features include:
     else {
       console.log("query with no image.");
       message.reply({content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
+      // console.log(message.embeds[0].data);
     }
   } catch (error) {
     console.log(error);
@@ -399,6 +400,122 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
   }
 
+let embedPost;
+if (reply) {
+  embedPost = reply;
+} else {
+  embedPost = userInput;
+}
+
+
+  if(typeof embedPost.embeds[0] != "undefined") {
+    console.log("found an embed");
+    console.log(embedPost.embeds[0].data);
+
+    switch (embedPost.embeds[0].data.type) {
+      case "rich":
+        if (embedPost.embeds[0].data.image) {
+          console.log("rich embed with image");
+          APImessages.push({
+          role: "system",
+          content:[ 
+            {
+              "type": "text",
+              "text": "message includes an embed. Post author: "+ embedPost.embeds[0].data.author.name +
+              ".\n Post body: " + embedPost.embeds[0].data.description + ".\n Post image:"
+            },
+            {
+              "type": "image_url",
+              image_url: { url: embedPost.embeds[0].data.image.url },
+            },
+          ]
+          })
+        } else {
+          console.log("rich embed without image");
+          APImessages.push({
+          role: "system",
+          content: "message includes an embed. Post author: "+ embedPost.embeds[0].data.author.name + 
+          ".\n Post body: " + embedPost.embeds[0].data.description
+          })
+        }
+        break;
+    
+      case "article":
+        if (embedPost.embeds[0].data.thumbnail) {
+          console.log("article embed with thumbnail");
+          APImessages.push({
+          role: "system",
+          content:[ 
+            {
+              "type": "text",
+              "text": "message includes an embed. Post origin: "+ embedPost.embeds[0].data.url +
+              ".\n Post body: " + embedPost.embeds[0].data.title + ".\n Post image:"
+            },
+            {
+              "type": "image_url",
+              image_url: { url: embedPost.embeds[0].data.thumbnail.url },
+            },
+          ]
+          })
+        } else {
+          console.log("article embed without thumbnail");
+          APImessages.push({
+          role: "system",
+          content: "message includes an embed. Post origin: "+ embedPost.embeds[0].data.url +
+              ".\n Post body: " + embedPost.embeds[0].data.title
+          })
+        }
+        break;
+
+      case "video":
+          console.log("video embed");
+          APImessages.push({
+          role: "system",
+          content:[ 
+            {
+              "type": "text",
+              "text": "message includes a video embed. Video author: "+ embedPost.embeds[0].data.author.name +
+              ".\n Video Title: " + embedPost.embeds[0].data.title +
+              ".\n Video description: " + embedPost.embeds[0].data.description + 
+              "\n Video thumbnail: "
+            },
+            {
+              "type": "image_url",
+              image_url: { url: embedPost.embeds[0].data.thumbnail.url },
+            },
+          ]
+          })
+        break;
+      
+      case "link":
+          console.log("link embed");
+          APImessages.push({
+          role: "system",
+          content:[ 
+            {
+              "type": "text",
+              "text": "message includes a link embed. Link source: "+ embedPost.embeds[0].data.url +
+              ".\n Link Title: " + embedPost.embeds[0].data.title +
+              "\n Link thumbnail: "
+            },
+            {
+              "type": "image_url",
+              image_url: { url: embedPost.embeds[0].data.thumbnail.url },
+            },
+          ]
+          })
+        break;
+      
+      default:
+        console.log("unknown embed, its not rich, article, video, or link")
+        break;
+    }
+
+
+  } else {
+    console.log("no embed");
+  }
+
   let DBKnowledgeBase = "";
   Object.keys(keywords).forEach(keyword => {
     if (userInput.content.toLowerCase().includes(keyword.toLowerCase())) {
@@ -439,7 +556,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     output = response.choices[0].message.content;
     // console.log(response);
   }
-
+  // output = "hello!";
 
 
   let contentToAppend
