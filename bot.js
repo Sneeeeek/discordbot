@@ -326,6 +326,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
   ];
 
+  let channelHistoryArray;
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
     const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
     channelHistoryArray = [...channelHistory.values()];
