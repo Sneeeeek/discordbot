@@ -1,7 +1,6 @@
 import dotenv from 'dotenv'; // Load environment variables
 import fs from "fs";
 import axios from "axios";
-import captureWebsite from 'capture-website';
 
 dotenv.config();
 const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
@@ -318,7 +317,6 @@ const keywords = {
 };
 
 async function queryOpenAI(userInput, attachment, reply) {
-
   const APImessages = [
     {
       role: "system",
@@ -331,7 +329,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
     channelHistoryArray = [...channelHistory.values()];
     channelHistoryArray.reverse().forEach(element => {
-      if (element.author.username === "Leif" || element.username === "Feixiao") {
+      if (element.author.username === "Snek dev bot" || element.username === "Feixiao") {
         APImessages.push({
           role: "assistant",
           content: element.content,
@@ -340,12 +338,12 @@ async function queryOpenAI(userInput, attachment, reply) {
         try {
           APImessages.push({
             role: "user",
-            content: element.member.displayName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
           })
         } catch (error) {
           APImessages.push({
             role: "user",
-            content: element.member.displayName + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
           })
         }
       }
