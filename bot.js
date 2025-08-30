@@ -136,7 +136,6 @@ Currently, my features include:
 - !think: If this command is invoked, i will spend extra time thinking before i give my response.
 - !setpro: you can use !setpro to set a custom pronoun that will be added to your input (if youve set one), to change your set pronoun you just do !setpro again. 
 - !delpro: To delete your custom pronoun, use !delpro.
-
 - Ask me for a dog or a cat and i will add a random photo of one to my response!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
 - Ask me for feixiaos build and i can give you some general advice.
