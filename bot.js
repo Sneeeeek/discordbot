@@ -58,12 +58,11 @@ function loadUserData() {
 
   if (data.trim() === '') {
     console.error('File is empty.');
-    userDataObj = [];
     return;
   }
 
-  const userData = JSON.parse(data);
-  userDataObj = [...userData];
+  userDataObj = JSON.parse(data);
+  console.log(userDataObj);
 }
 
 client.on("ready", () => {
@@ -184,7 +183,7 @@ Currently, my features include:
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
     message.channel.send("!setpro");
-    // userDataArray
+    fs.writeFileSync("userData/userData.json", JSON.stringify(userDataObj, null, 2));
     return;
   }
 
