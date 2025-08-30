@@ -43,12 +43,11 @@ function textToArray(message) {
   chatHistoryArray = [...chatHistory];
 }
 
-function loadUserData() {
-  let filePath = "userData/userData.json";
-  console.log(filePath);
+async function loadUserData() {
+  let filePath = "chatHistory/userData.json";
 
-  if (!fs.existsSync("userData")) {
-    fs.mkdirSync("userData");
+  if (!fs.existsSync("chatHistory")) {
+    fs.mkdirSync("chatHistory");
   }
 
   if (!fs.existsSync(filePath)) {
@@ -58,11 +57,11 @@ function loadUserData() {
 
   if (data.trim() === '') {
     console.error('File is empty.');
+    userDataObj = {};
     return;
   }
 
   userDataObj = JSON.parse(data);
-  console.log(userDataObj);
 }
 
 client.on("ready", () => {
@@ -178,17 +177,31 @@ Currently, my features include:
     return;
   }
 
-  textToArray(message);
-  // loadUserData();
+  try {
+    textToArray(message);
+    await loadUserData();
+  } catch (error) {
+    message.channel.send("File read error:\n" + error);
+    return;
+  }
 
-  // if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
-  //   let user = message.author.id;
-  //   let pronoun = message.content.replace("!setpro", "").trim();
-  //   // userDataObj. = "property4";
-  //   message.channel.send(user + " + " + pronoun);
-  //   fs.writeFileSync("userData/userData.json", JSON.stringify(userDataObj, null, 2));
-  //   return;
-  // }
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
+    let user = message.author.id;
+    let pronoun = message.content.replace("!setpro", "").trim();
+    userDataObj[user] = pronoun;
+    message.channel.send("Set: \"" + pronoun + "\" for user \"" + message.author.username + "\"");
+    fs.writeFileSync("chatHistory/userData.json", JSON.stringify(userDataObj, null, 2));
+    return;
+  }
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!delpro")) {
+    let user = message.author.id;
+    message.channel.send("Deleting: \"" + userDataObj[user] + "\" from user \"" + message.author.username + "\"");
+    delete userDataObj[user];
+    fs.writeFileSync("chatHistory/userData.json", JSON.stringify(userDataObj, null, 2));
+    return;
+  }
 
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
@@ -359,6 +372,21 @@ async function queryOpenAI(userInput, attachment, reply) {
       content: systemPrompt,
     }
   ];
+  let nickname = userInput.member.displayName;
+  let repliedNick;
+  
+  if (reply) {
+    repliedNick = reply.member.displayName + " (pref. pronoun: " + userDataObj[reply.author.id] + ")";
+    console.log("id: " + reply.author.id)
+    console.log("found reply entry: " + userDataObj[reply.author.id]);
+    console.log("reply nick: " + repliedNick);
+  }
+
+  if (userDataObj[userInput.author.id]) {
+    nickname = nickname + " (pref. pronoun: " + userDataObj[userInput.author.id] + ")";
+    console.log("found entry: " + userDataObj[userInput.author.id]);
+    console.log("new nick: " + nickname);
+  }
 
   let channelHistoryArray;
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
@@ -412,7 +440,7 @@ async function queryOpenAI(userInput, attachment, reply) {
         content: [
           {
             "type": "text",
-            "text": userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+            "text": nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
           },
           {
             "type": "image_url",
@@ -423,13 +451,13 @@ async function queryOpenAI(userInput, attachment, reply) {
     } else if (reply) {
       APImessages.push({
         role: "user",
-        content: userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + reply.member.displayName + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
       })
       console.log("message is a reply to another user")
     } else {
       APImessages.push({
         role: "user",
-        content: userInput.member.displayName + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
       })
       console.log("attachment is not present")
     }
