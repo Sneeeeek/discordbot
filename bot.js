@@ -18,7 +18,7 @@ const client = new Client({
 const snekUserID = "278603791182594048";
 let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
-let userDataArray;
+let userDataObj;
 
 function textToArray(message) {
   let filePath = "chatHistory/" + message.channelId + ".json";
@@ -58,12 +58,12 @@ function loadUserData() {
 
   if (data.trim() === '') {
     console.error('File is empty.');
-    chatHistoryArray = [];
+    userDataObj = [];
     return;
   }
 
   const userData = JSON.parse(data);
-  userDataArray = [...userData];
+  userDataObj = [...userData];
 }
 
 client.on("ready", () => {
@@ -184,6 +184,7 @@ Currently, my features include:
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
     message.channel.send("!setpro");
+    // userDataArray
     return;
   }
 
