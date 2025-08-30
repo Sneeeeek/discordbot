@@ -179,13 +179,16 @@ Currently, my features include:
   }
 
   textToArray(message);
-  loadUserData();
+  // loadUserData();
 
-  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
-    message.channel.send("!setpro");
-    fs.writeFileSync("userData/userData.json", JSON.stringify(userDataObj, null, 2));
-    return;
-  }
+  // if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
+  //   let user = message.author.id;
+  //   let pronoun = message.content.replace("!setpro", "").trim();
+  //   // userDataObj. = "property4";
+  //   message.channel.send(user + " + " + pronoun);
+  //   fs.writeFileSync("userData/userData.json", JSON.stringify(userDataObj, null, 2));
+  //   return;
+  // }
 
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
