@@ -134,6 +134,9 @@ Currently, my features include:
 - !about: Provides information about me and how to interact with me, you are currently reading the !about section.
 - !context: Fetches the last 20 messages in this channel and uses them as context for my responses.
 - !think: If this command is invoked, i will spend extra time thinking before i give my response.
+- !setpro: you can use !setpro to set a custom pronoun that will be added to your input (if youve set one), to change your set pronoun you just do !setpro again. 
+- !delpro: To delete your custom pronoun, use !delpro.
+
 - Ask me for a dog or a cat and i will add a random photo of one to my response!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
 - Ask me for feixiaos build and i can give you some general advice.
@@ -188,7 +191,7 @@ Currently, my features include:
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
     let user = message.author.id;
-    let pronoun = message.content.replace("!setpro", "").trim();
+    let pronoun = message.content.replace("!setpro", "").replace(/<@!?(\d+)>/g, '').trim();
     userDataObj[user] = pronoun;
     message.channel.send("Set: \"" + pronoun + "\" for user \"" + message.author.username + "\"");
     fs.writeFileSync("chatHistory/userData.json", JSON.stringify(userDataObj, null, 2));
