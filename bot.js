@@ -48,7 +48,7 @@ function loadUserData() {
   console.log(filePath);
 
   if (!fs.existsSync("userData")) {
-    fs.mkdir("userData");
+    fs.mkdirSync("userData");
   }
 
   if (!fs.existsSync(filePath)) {
@@ -180,7 +180,12 @@ Currently, my features include:
   }
 
   textToArray(message);
-  // loadUserData();
+  loadUserData();
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setpro")) {
+    message.channel.send("!setpro");
+    return;
+  }
 
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
@@ -205,8 +210,8 @@ Currently, my features include:
     }
     else {
       console.log("query with no image.");
-      // message.reply({content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
-      console.log("pinged");
+      message.reply({content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
+      // console.log("pinged");
 
     }
   } catch (error) {
