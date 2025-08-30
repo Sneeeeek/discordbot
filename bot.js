@@ -18,6 +18,7 @@ const client = new Client({
 const snekUserID = "278603791182594048";
 let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
+let userDataArray;
 
 function textToArray(message) {
   let filePath = "chatHistory/" + message.channelId + ".json";
@@ -42,6 +43,29 @@ function textToArray(message) {
   chatHistoryArray = [...chatHistory];
 }
 
+function loadUserData() {
+  let filePath = "userData/userData.json";
+  console.log(filePath);
+
+  if (!fs.existsSync("userData")) {
+    fs.mkdir("userData");
+  }
+
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '', 'utf8');
+  }
+  const data = fs.readFileSync(filePath, 'utf-8');
+
+  if (data.trim() === '') {
+    console.error('File is empty.');
+    chatHistoryArray = [];
+    return;
+  }
+
+  const userData = JSON.parse(data);
+  userDataArray = [...userData];
+}
+
 client.on("ready", () => {
   console.log("I am ready!");
   myUID = client.user.id;
@@ -63,7 +87,7 @@ client.on("messageCreate", async (message) => {
         await message.channel.send("You do not have the media permissions role.");
         return;
       };
-      if (message.content.startsWith(!web)){return;}
+      if (message.content.startsWith(!web)) { return; }
     }
 
     // Check if it has an attachment
@@ -100,7 +124,7 @@ client.login(token);
 
 async function mentioned(message, attachment, reply) {
   const aboutText =
-  `
+    `
 Hello, <@${message.author.id}>! I am Feixiao, the Lacking General from *Honkai: Star Rail*.
 
 I am a bot created by <@${snekUserID}>. I use the openAI API to respond to messages in character as Feixiao.
@@ -156,6 +180,8 @@ Currently, my features include:
   }
 
   textToArray(message);
+  // loadUserData();
+
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
     let contentToAppend;
@@ -165,22 +191,23 @@ Currently, my features include:
       "message": "" + message.content + ""
     },
 
-    await message.channel.sendTyping();
+      await message.channel.sendTyping();
 
     chatHistoryArray.push(contentToAppend);
 
     if (attachment) {
       console.log("query with image.");
-      message.reply({content: await queryOpenAI(message, attachment), allowedMentions: { parse: ["users", "roles"] } });
+      message.reply({ content: await queryOpenAI(message, attachment), allowedMentions: { parse: ["users", "roles"] } });
     }
     else if (reply) {
       console.log("query with reply.");
-      message.reply({content: await queryOpenAI(message, null, reply), allowedMentions: { parse: ["users", "roles"] } });
+      message.reply({ content: await queryOpenAI(message, null, reply), allowedMentions: { parse: ["users", "roles"] } });
     }
     else {
       console.log("query with no image.");
-      message.reply({content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
-      // console.log(message.embeds[0].data);
+      // message.reply({content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
+      console.log("pinged");
+
     }
   } catch (error) {
     console.log(error);
@@ -370,7 +397,7 @@ async function queryOpenAI(userInput, attachment, reply) {
     });
 
     if (attachment) {
-      console.log(attachment.slice(0,50));
+      console.log(attachment.slice(0, 50));
       APImessages.push({
         role: "user",
         content: [
@@ -399,15 +426,15 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
   }
 
-let embedPost;
-if (reply) {
-  embedPost = reply;
-} else {
-  embedPost = userInput;
-}
+  let embedPost;
+  if (reply) {
+    embedPost = reply;
+  } else {
+    embedPost = userInput;
+  }
 
 
-  if(typeof embedPost.embeds[0] != "undefined") {
+  if (typeof embedPost.embeds[0] != "undefined") {
     console.log("found an embed");
     // console.log(embedPost.embeds[0].data);
 
@@ -416,95 +443,111 @@ if (reply) {
         if (embedPost.embeds[0].data.image) {
           console.log("rich embed with image");
           APImessages.push({
-          role: "system",
-          content:[ 
-            {
-              "type": "text",
-              "text": "message includes an embed. Post author: "+ embedPost.embeds[0].data.author.name +
-              ".\n Post body: " + embedPost.embeds[0].data.description + ".\n Post image:"
-            },
-            {
-              "type": "image_url",
-              image_url: { url: embedPost.embeds[0].data.image.url },
-            },
-          ]
+            role: "system",
+            content: [
+              {
+                "type": "text",
+                "text": "message includes an embed. Post author: " + embedPost.embeds[0].data.author.name +
+                  ".\n Post body: " + embedPost.embeds[0].data.description + ".\n Post image:"
+              },
+              {
+                "type": "image_url",
+                image_url: { url: embedPost.embeds[0].data.image.url },
+              },
+            ]
+          })
+        } else if (embedPost.embeds[0].data.thumbnail) {
+          console.log("rich embed with image");
+          APImessages.push({
+            role: "system",
+            content: [
+              {
+                "type": "text",
+                "text": "message includes an embed. Post author: " + embedPost.embeds[0].data.author.name +
+                  ".\n Post body: " + embedPost.embeds[0].data.description + ".\n Post image:"
+              },
+              {
+                "type": "image_url",
+                image_url: { url: embedPost.embeds[0].data.thumbnail.url },
+              },
+            ]
           })
         } else {
           console.log("rich embed without image");
           APImessages.push({
-          role: "system",
-          content: "message includes an embed. Post author: "+ embedPost.embeds[0].data.author.name + 
-          ".\n Post body: " + embedPost.embeds[0].data.description
+            role: "system",
+            content: "message includes an embed. Post author: " + embedPost.embeds[0].data.author.name +
+              ".\n Post body: " + embedPost.embeds[0].data.description
           })
         }
         break;
-    
+
       case "article":
         if (embedPost.embeds[0].data.thumbnail) {
           console.log("article embed with thumbnail");
           APImessages.push({
-          role: "system",
-          content:[ 
-            {
-              "type": "text",
-              "text": "message includes an embed. Post origin: "+ embedPost.embeds[0].data.url +
-              ".\n Post body: " + embedPost.embeds[0].data.title + ".\n Post image:"
-            },
-            {
-              "type": "image_url",
-              image_url: { url: embedPost.embeds[0].data.thumbnail.url },
-            },
-          ]
+            role: "system",
+            content: [
+              {
+                "type": "text",
+                "text": "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
+                  ".\n Post body: " + embedPost.embeds[0].data.title + ".\n Post image:"
+              },
+              {
+                "type": "image_url",
+                image_url: { url: embedPost.embeds[0].data.thumbnail.url },
+              },
+            ]
           })
         } else {
           console.log("article embed without thumbnail");
           APImessages.push({
-          role: "system",
-          content: "message includes an embed. Post origin: "+ embedPost.embeds[0].data.url +
+            role: "system",
+            content: "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
               ".\n Post body: " + embedPost.embeds[0].data.title
           })
         }
         break;
 
       case "video":
-          console.log("video embed");
-          APImessages.push({
+        console.log("video embed");
+        APImessages.push({
           role: "system",
-          content:[ 
+          content: [
             {
               "type": "text",
-              "text": "message includes a video embed. Video author: "+ embedPost.embeds[0].data.author.name +
-              ".\n Video Title: " + embedPost.embeds[0].data.title +
-              ".\n Video description: " + embedPost.embeds[0].data.description + 
-              "\n Video thumbnail: "
+              "text": "message includes a video embed. Video author: " + embedPost.embeds[0].data.author.name +
+                ".\n Video Title: " + embedPost.embeds[0].data.title +
+                ".\n Video description: " + embedPost.embeds[0].data.description +
+                "\n Video thumbnail: "
             },
             {
               "type": "image_url",
               image_url: { url: embedPost.embeds[0].data.thumbnail.url },
             },
           ]
-          })
+        })
         break;
-      
+
       case "link":
-          console.log("link embed");
-          APImessages.push({
+        console.log("link embed");
+        APImessages.push({
           role: "system",
-          content:[ 
+          content: [
             {
               "type": "text",
-              "text": "message includes a link embed. Link source: "+ embedPost.embeds[0].data.url +
-              ".\n Link Title: " + embedPost.embeds[0].data.title +
-              "\n Link thumbnail: "
+              "text": "message includes a link embed. Link source: " + embedPost.embeds[0].data.url +
+                ".\n Link Title: " + embedPost.embeds[0].data.title +
+                "\n Link thumbnail: "
             },
             {
               "type": "image_url",
               image_url: { url: embedPost.embeds[0].data.thumbnail.url },
             },
           ]
-          })
+        })
         break;
-      
+
       default:
         console.log("unknown embed, its not rich, article, video, or link")
         break;
@@ -534,7 +577,7 @@ if (reply) {
   })
 
   let output;
-  
+
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!think")) {
     const response = await AIclient.chat.completions.create({
       model: model,
@@ -660,17 +703,3 @@ function addEmote(emoteInner) {
   if (emoteInner == "nekoMwah") { return "<a:" + emoteInner + ":" + emoteList[emoteInner] + ">"; }
   else { return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">"; }
 }
-
-// const teamText = `
-// Feixiaos current bis team is Feixiao, Cipher, Robin, and Aventurine/Hyacine.
-// `;
-
-// function addBuild(output) {
-//   output = output.replace("<build>", buildText);
-//   return output;
-// }
-
-// function addTeam(output) {
-//   output = output.replace("<team>", teamText);
-//   return output;
-// }
