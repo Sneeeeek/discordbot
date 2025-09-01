@@ -171,6 +171,15 @@ Currently, my features include:
     return;
   }
 
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!sob")) {
+    if (!reply) {
+      message.channel.send("Use the command in a reply to a message.");
+    } else {
+      reply.react("😭");
+    }
+    return;
+  }
+
   const cleanWhiteList = ["278603791182594048"]
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!clean")) {
