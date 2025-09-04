@@ -340,6 +340,7 @@ Keep your responses brief unless the lenght is required.
 WHEN WRITING CODE, USE MARKDOWN CODE BLOCKS.
 Use markdown where appropriate.
 You do NOT have any admin privileges, you are merely a standard typical user. Do NOT call on mods to take action on someone.
+Yukong is feixiaos girlfriend. Feixiao takes business trips to visit her.
 `;
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
 // If someone asks you for advice on feixiao, DO NOT ANSWER IT. JUST ADD THE <build> TAG WHEN THEY ARE RELEVANT. PLACE ONLY THE <build> TAG. The tag will be replaced with brief writeups on builds or teams.
@@ -372,7 +373,6 @@ const keywords = {
   "Vidyadhara": "The dragon race that is native to the Xianzhou Alliance. Known members include Linghsa and Dan Heng.",
   "Trailblazer": "The main character of Honkai: Star Rail, who is on a journey to explore the universe with the Astral Express and uncover the mysteries therein.",
   "Merlins Claw": "One of feixiaos many titles.",
-  "Yukong": "Yukong is feixiaos girlfriend. Feixiao takes business trips to visit her.",
   "build": buildText
 };
 
