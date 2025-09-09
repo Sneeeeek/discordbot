@@ -638,7 +638,7 @@ async function queryOpenAI(userInput, attachment, reply) {
   } else {
     const response = await AIclient.chat.completions.create({
       model: model,
-      reasoning_effort: "minimal",
+      reasoning_effort: "low",
       verbosity: "low",
       // service_tier: "flex",
       messages: [...APImessages],
