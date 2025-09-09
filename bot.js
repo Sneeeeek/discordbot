@@ -6,7 +6,7 @@ dotenv.config();
 const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
 const openAIKey = process.env.OPENAIKEY;
 
-import { Client, GatewayIntentBits, MessageFlags } from 'discord.js';
+import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -140,29 +140,6 @@ Currently, my features include:
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
 - Ask me for feixiaos build and i can give you some general advice.
   `
-  // const webWhiteList = ["360426995152060418"];
-  // if(webWhiteList.includes(message.guildId)){
-  //   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!web")) {
-  //     let matches = message.content.match(/\bhttps?:\/\/\S+/gi);
-  //     if (matches) {
-  //     let sentMessage;
-  //     let imageAsBase64;
-  //       try {
-  //         sentMessage = await message.channel.send("Found a link. Processing.");
-  //         textToArray(message);
-  //         await captureWebsite.file(matches[0], 'chatHistory/screenshot.jpeg', { fullPage: true, blockAds: true, overwrite: true, type: 'jpeg', launchOptions: {args: ['--no-sandbox', '--disable-setuid-sandbox']}});
-  //         imageAsBase64 = "data:image/jpeg;base64," + await fs.readFileSync('chatHistory/screenshot.jpeg', 'base64');
-  //       } catch (error) {
-  //         message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
-  //         return;
-  //       }
-  //       await sentMessage.edit(await queryOpenAI(message, imageAsBase64));
-  //     } else {
-  //       await message.channel.send("There was no link detected.");
-  //     }
-  //     return;
-  //   }
-  // }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!about")) {
     let sentMessage;
@@ -211,6 +188,17 @@ Currently, my features include:
     message.channel.send("Deleting: \"" + userDataObj[user] + "\" from user \"" + message.author.username + "\"");
     delete userDataObj[user];
     fs.writeFileSync("chatHistory/userData.json", JSON.stringify(userDataObj, null, 2));
+    return;
+  }
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!mal")) {
+    let searchPhrase = message.content.replace(/<@!?(\d+)>/g, '').replace("!mal", "").trim();
+    console.log("Seach phrase: " + searchPhrase);
+    try {
+      message.reply({ content: await getMAL(searchPhrase), allowedMentions: { parse: ["users", "roles"] } });
+    } catch (error) {
+      console.error(error);
+    }
     return;
   }
 
@@ -750,4 +738,21 @@ function addEmote(emoteInner) {
   // console.log(emoteList[emoteInner]);
   if (emoteInner == "nekoMwah") { return "<a:" + emoteInner + ":" + emoteList[emoteInner] + ">"; }
   else { return "<:" + emoteInner + ":" + emoteList[emoteInner] + ">"; }
+}
+
+// https://myanimelist.net/search/prefix.json?type=all&keyword="cowboy bebop"&v=1
+// 
+// curl https://api.myanimelist.net/v2/anime/10357?fields=rank,mean,alternative_titles 
+// -H "X-MAL-CLIENT-ID: malClientID"
+
+async function getMAL(searchPhrase) {
+  const { data } = await axios.get("https://myanimelist.net/search/prefix.json?type=all&keyword=" + searchPhrase);
+  // console.log(data);
+  const items = data.categories[0].items;
+  let returnString = "Names: ";
+  returnString = items.map(element => element.name).join(", ");
+  // array.forEach(element => {
+  //   returnString += element.name + " "
+  // });
+  return returnString;
 }
