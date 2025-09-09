@@ -214,12 +214,12 @@ Currently, my features include:
     return;
   }
 
-    if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setreason")) {
-      if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command."); return;}
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setreason")) {
+    if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command."); return; }
     let server = message.guildId;
     let effort = message.content.replace("!setreason", "").replace(/<@!?(\d+)>/g, '').trim();
     console.log(effort);
-    if (!["minimal","low","medium","high"].includes(effort)) {message.channel.send("Incorrect input. Supported effort levels are minimal, low, medium, or high."); return;}
+    if (!["minimal", "low", "medium", "high"].includes(effort)) { message.channel.send("Incorrect input. Supported effort levels are minimal, low, medium, or high."); return; }
     serverDataObj[server] = effort;
     message.channel.send("Set: \"" + effort + "\" for server \"" + message.guildId + "\"");
     fs.writeFileSync("chatHistory/serverData.json", JSON.stringify(serverDataObj, null, 2));
@@ -227,7 +227,7 @@ Currently, my features include:
   }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!delreason")) {
-      if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command.")}
+    if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command.") }
     let server = message.guildId;
     message.channel.send("Deleting: \"" + serverDataObj[server] + "\" from server \"" + message.guildId + "\"");
     delete serverDataObj[server];
@@ -269,7 +269,7 @@ Currently, my features include:
     }
     else {
       console.log("query with no image.");
-      message.reply({content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
+      message.reply({ content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
       // console.log("pinged");
 
     }
@@ -417,7 +417,7 @@ async function queryOpenAI(userInput, attachment, reply) {
   ];
   let nickname = userInput.member.displayName;
   let repliedNick;
-  
+
   if (reply) {
     repliedNick = reply.member.displayName + " (pref. pronoun: " + userDataObj[reply.author.id] + ")";
     console.log("id: " + reply.author.id)
