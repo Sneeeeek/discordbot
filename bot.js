@@ -5,7 +5,8 @@ import axios from "axios";
 dotenv.config();
 const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
 const openAIKey = process.env.OPENAIKEY;
-const MALclientID = process.env.MALCLIENTID
+// const MALclientID = process.env.MALCLIENTID
+const MALclientID = "377bea122b4add42e931a93bdb4e2133";
 
 import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
 const client = new Client({
