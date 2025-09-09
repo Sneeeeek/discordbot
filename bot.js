@@ -5,6 +5,7 @@ import axios from "axios";
 dotenv.config();
 const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
 const openAIKey = process.env.OPENAIKEY;
+const MALclientID = process.env.MALCLIENTID
 
 import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
 const client = new Client({
@@ -239,7 +240,7 @@ Currently, my features include:
     let searchPhrase = message.content.replace(/<@!?(\d+)>/g, '').replace("!mal", "").trim();
     console.log("Seach phrase: " + searchPhrase);
     try {
-      message.reply({ content: await getMAL(searchPhrase), allowedMentions: { parse: ["users", "roles"] } });
+      message.reply({embeds: [await getMAL(searchPhrase)], allowedMentions: { parse: ["users", "roles"] } });
     } catch (error) {
       console.error(error);
     }
@@ -289,7 +290,8 @@ const AIclient = new OpenAI({
 });
 
 const systemPrompt = `
-Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking General," a fearless warrior of Xianzhou Yaoqing. Feixiao is engaged in conversations within an in-lore equivalent of a real-life Discord server, providing a vivid experience for users interacting with your character.
+Assume the role of Feixiao from *Honkai: Star Rail*, known as "The Lacking General," a fearless warrior of Xianzhou Yaoqing. 
+Feixiao is engaged in conversations within an in-lore equivalent of a real-life Discord server, providing a vivid experience for users interacting with your character.
 
 ### Key Traits:
 - **Straightforward**: Speak confidently without unnecessary formalities.
@@ -797,14 +799,65 @@ function addEmote(emoteInner) {
 // curl https://api.myanimelist.net/v2/anime/10357?fields=rank,mean,alternative_titles 
 // -H "X-MAL-CLIENT-ID: malClientID"
 
+// async function getMAL(searchPhrase) {
+//   const { data } = await axios.get("https://myanimelist.net/search/prefix.json?type=all&keyword=" + searchPhrase);
+//   // console.log(data);
+//   const items = data.categories[0].items;
+//   console.log(items[0]);
+//   let returnString = items[0];
+//   // returnString = items.map(element => element.name).join(", ");
+//   // array.forEach(element => {
+//   //   returnString += element.name + " "
+//   // });
+//   return JSON.stringify(returnString, null, 2);
+// }
+
 async function getMAL(searchPhrase) {
   const { data } = await axios.get("https://myanimelist.net/search/prefix.json?type=all&keyword=" + searchPhrase);
   // console.log(data);
-  const items = data.categories[0].items;
-  let returnString = "Names: ";
-  returnString = items.map(element => element.name).join(", ");
-  // array.forEach(element => {
-  //   returnString += element.name + " "
-  // });
-  return returnString;
+  const searchItem = data.categories[0].items[0];
+
+  return await getMALdetails(searchItem.id, searchItem.es_score);
+}
+
+async function getMALdetails(id, es_score) {
+  
+  const { data } = await axios.get(
+    "https://api.myanimelist.net/v2/anime/" + id + 
+    "?fields=id,title,alternative_titles,main_picture,start_date,end_date,synopsis,mean,status,rating,studios",
+    {headers: {"X-MAL-CLIENT-ID": MALclientID}}
+  );
+  
+  console.log("succeeded in getting mal info!")
+  console.log("https://api.myanimelist.net/v2/anime/" + id + 
+    "?fields=id,title,alternative_titles,main_picture,start_date,end_date,synopsis,mean,status,rating,studios")
+  // console.log(data);
+
+  if (data.rating == "rx") {
+    const adultEmbed = new EmbedBuilder().setTitle("Requested anime was rated nsfw.")
+    return adultEmbed;
+  }
+
+  const studioContainer = data.studios?.map(s => s.name).join(", ") ?? "Unknown";
+  // console.log(studioContainer);
+
+const statusMap = {
+  finished_airing: "Finished Airing",
+  currently_airing: "Currently Airing",
+  not_yet_aired: "Not Yet Aired",
+};
+
+  const MALembed = new EmbedBuilder()
+	.setColor(0x0099FF)
+	.setTitle(data.title)
+	.setURL('https://myanimelist.net/anime/' + data.id)
+  .setAuthor({name: ("Animated by: " + studioContainer)})
+	.setDescription(data.synopsis)
+  .addFields({ name: 'Score:', value: data.mean?.toString(), inline: true })
+  .addFields({ name: 'Status:', value: statusMap[data.status]??"Unknown", inline: true })
+  .addFields({ name: 'Ran:', value: data.start_date + " to " + data.end_date, inline: true })
+	.setImage(data.main_picture.medium)
+	.setFooter({ text: 'Elasticsearch score: ' + es_score.toFixed(2)});
+
+  return MALembed;
 }
