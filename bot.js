@@ -19,6 +19,7 @@ const snekUserID = "278603791182594048";
 let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
 let userDataObj;
+let serverDataObj;
 
 function textToArray(message) {
   let filePath = "chatHistory/" + message.channelId + ".json";
@@ -62,6 +63,27 @@ async function loadUserData() {
   }
 
   userDataObj = JSON.parse(data);
+}
+
+async function loadServerData() {
+  let filePath = "chatHistory/serverData.json";
+
+  if (!fs.existsSync("chatHistory")) {
+    fs.mkdirSync("chatHistory");
+  }
+
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '', 'utf8');
+  }
+  const data = fs.readFileSync(filePath, 'utf-8');
+
+  if (data.trim() === '') {
+    console.error('File is empty.');
+    serverDataObj = {};
+    return;
+  }
+
+  serverDataObj = JSON.parse(data);
 }
 
 client.on("ready", () => {
@@ -168,6 +190,7 @@ Currently, my features include:
   try {
     textToArray(message);
     await loadUserData();
+    await loadServerData();
   } catch (error) {
     message.channel.send("File read error:\n" + error);
     return;
@@ -188,6 +211,27 @@ Currently, my features include:
     message.channel.send("Deleting: \"" + userDataObj[user] + "\" from user \"" + message.author.username + "\"");
     delete userDataObj[user];
     fs.writeFileSync("chatHistory/userData.json", JSON.stringify(userDataObj, null, 2));
+    return;
+  }
+
+    if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setreason")) {
+      if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command."); return;}
+    let server = message.guildId;
+    let effort = message.content.replace("!setreason", "").replace(/<@!?(\d+)>/g, '').trim();
+    console.log(effort);
+    if (!["minimal","low","medium","high"].includes(effort)) {message.channel.send("Incorrect input. Supported effort levels are minimal, low, medium, or high."); return;}
+    serverDataObj[server] = effort;
+    message.channel.send("Set: \"" + effort + "\" for server \"" + message.guildId + "\"");
+    fs.writeFileSync("chatHistory/serverData.json", JSON.stringify(serverDataObj, null, 2));
+    return;
+  }
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!delreason")) {
+      if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command.")}
+    let server = message.guildId;
+    message.channel.send("Deleting: \"" + serverDataObj[server] + "\" from server \"" + message.guildId + "\"");
+    delete serverDataObj[server];
+    fs.writeFileSync("chatHistory/serverData.json", JSON.stringify(serverDataObj, null, 2));
     return;
   }
 
@@ -624,15 +668,23 @@ async function queryOpenAI(userInput, attachment, reply) {
     output = response.choices[0].message.content;
     console.log("medium effort");
   } else {
+    let reasoningChoice;
+    if (serverDataObj[userInput.guildId]) {
+      reasoningChoice = serverDataObj[userInput.guildId];
+    } else {
+      reasoningChoice = "minimal";
+    }
+
     const response = await AIclient.chat.completions.create({
       model: model,
-      reasoning_effort: "low",
+      reasoning_effort: reasoningChoice,
       verbosity: "low",
       // service_tier: "flex",
       messages: [...APImessages],
     });
     output = response.choices[0].message.content;
-    // console.log(response);
+    console.log("reasoningchoice = " + reasoningChoice);
+
   }
   // output = "hello!";
 
