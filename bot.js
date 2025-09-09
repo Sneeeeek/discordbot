@@ -160,6 +160,8 @@ Currently, my features include:
 - !think: If this command is invoked, i will spend extra time thinking before i give my response.
 - !setpro: you can use !setpro to set a custom pronoun that will be added to your input (if youve set one), to change your set pronoun you just do !setpro again. 
 - !delpro: To delete your custom pronoun, use !delpro.
+- !mal: Look up an anime on MyAnimeList by name. This uses MALs search feature. Anime rated nsfw wont be displayed.
+- !sob: Use this in a reply to add a sob emote to the replied message.
 - Ask me for a dog or a cat and i will add a random photo of one to my response!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
 - Ask me for feixiaos build and i can give you some general advice.
@@ -241,7 +243,7 @@ Currently, my features include:
     let searchPhrase = message.content.replace(/<@!?(\d+)>/g, '').replace("!mal", "").trim();
     console.log("Seach phrase: " + searchPhrase);
     try {
-      message.reply({embeds: [await getMAL(searchPhrase)], allowedMentions: { parse: ["users", "roles"] } });
+      message.reply({ embeds: [await getMAL(searchPhrase)], allowedMentions: { parse: ["users", "roles"] } });
     } catch (error) {
       console.error(error);
     }
@@ -822,15 +824,15 @@ async function getMAL(searchPhrase) {
 }
 
 async function getMALdetails(id, es_score) {
-  
+
   const { data } = await axios.get(
-    "https://api.myanimelist.net/v2/anime/" + id + 
+    "https://api.myanimelist.net/v2/anime/" + id +
     "?fields=id,title,alternative_titles,main_picture,start_date,end_date,synopsis,mean,status,rating,studios",
-    {headers: {"X-MAL-CLIENT-ID": MALclientID}}
+    { headers: { "X-MAL-CLIENT-ID": MALclientID } }
   );
-  
+
   console.log("succeeded in getting mal info!")
-  console.log("https://api.myanimelist.net/v2/anime/" + id + 
+  console.log("https://api.myanimelist.net/v2/anime/" + id +
     "?fields=id,title,alternative_titles,main_picture,start_date,end_date,synopsis,mean,status,rating,studios")
   // console.log(data);
 
@@ -842,23 +844,23 @@ async function getMALdetails(id, es_score) {
   const studioContainer = data.studios?.map(s => s.name).join(", ") ?? "Unknown";
   // console.log(studioContainer);
 
-const statusMap = {
-  finished_airing: "Finished Airing",
-  currently_airing: "Currently Airing",
-  not_yet_aired: "Not Yet Aired",
-};
+  const statusMap = {
+    finished_airing: "Finished Airing",
+    currently_airing: "Currently Airing",
+    not_yet_aired: "Not Yet Aired",
+  };
 
   const MALembed = new EmbedBuilder()
-	.setColor(0x0099FF)
-	.setTitle(data.title)
-	.setURL('https://myanimelist.net/anime/' + data.id)
-  .setAuthor({name: ("Animated by: " + studioContainer)})
-	.setDescription(data.synopsis)
-  .addFields({ name: 'Score:', value: data.mean?.toString(), inline: true })
-  .addFields({ name: 'Status:', value: statusMap[data.status]??"Unknown", inline: true })
-  .addFields({ name: 'Ran:', value: data.start_date + " to " + data.end_date, inline: true })
-	.setImage(data.main_picture.medium)
-	.setFooter({ text: 'Elasticsearch score: ' + es_score.toFixed(2)});
+    .setColor(0x0099FF)
+    .setTitle(data.title)
+    .setURL('https://myanimelist.net/anime/' + data.id)
+    .setAuthor({ name: ("Animated by: " + studioContainer) })
+    .setDescription(data.synopsis)
+    .addFields({ name: 'Score:', value: data.mean?.toString(), inline: true })
+    .addFields({ name: 'Status:', value: statusMap[data.status] ?? "Unknown", inline: true })
+    .addFields({ name: 'Ran:', value: data.start_date + " to " + data.end_date, inline: true })
+    .setImage(data.main_picture.medium)
+    .setFooter({ text: 'Elasticsearch score: ' + es_score.toFixed(2) });
 
   return MALembed;
 }
