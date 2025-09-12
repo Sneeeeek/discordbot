@@ -1,10 +1,12 @@
 FROM node:latest
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 && \
+    ln -s /usr/bin/python3 /usr/bin/python
+
 WORKDIR /app
 COPY package.json .
-# RUN npx puppeteer browsers install chrome
-# RUN apt-get update
-# RUN apt-get install -y --no-install-recommends libgtk-3-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2
 RUN npm install
-COPY bot.js .
+COPY ytdl.js .
 
-CMD ["node", "bot.js"]
+CMD ["node", "ytdl.js"]

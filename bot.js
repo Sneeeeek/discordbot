@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'; // Load environment variables
 import fs from "fs";
 import axios from "axios";
+import ytdl from 'youtube-dl-exec';
 
 dotenv.config();
 const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
@@ -244,6 +245,27 @@ Currently, my features include:
     console.log("Seach phrase: " + searchPhrase);
     try {
       message.reply({ embeds: [await getMAL(searchPhrase)], allowedMentions: { parse: ["users", "roles"] } });
+    } catch (error) {
+      console.error(error);
+    }
+    return;
+  }
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!yt")) {
+    let url = message.content.replace(/<@!?(\d+)>/g, '').replace("!yt", "").trim();
+    console.log("Video: " + url);
+    try {
+      message.channel.sendTyping();
+      let response = splitMessage(await youtube(url));
+
+      response.forEach(element => {
+        element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+          console.log("emotes found")
+          return addEmote(emoteInner);
+        });
+        message.channel.send(element);
+      });
+
     } catch (error) {
       console.error(error);
     }
@@ -863,4 +885,80 @@ async function getMALdetails(id, es_score) {
     .setFooter({ text: 'Elasticsearch score: ' + es_score.toFixed(2) });
 
   return MALembed;
+}
+
+async function youtube(url) {
+  console.log("starting youtube feature");
+
+  const info = await ytdl(url, {
+    dumpSingleJson: true,
+    skipDownload: true,
+    writeAutoSub: true,
+    subLang: 'en',
+    subFormat: 'srt',
+    output: 'transcript.%(ext)s'
+  });
+  const srt = fs.readFileSync("transcript.en.srt", 'utf8');
+
+  const lines = srt
+    .split(/\r?\n/)
+    // drop index lines like "123"
+    .filter(l => !/^\d{1,3}\s*$/.test(l))
+    // drop timestamp lines
+    .filter(l => !/^\d{2}:\d{2}:\d{2}[,\.]\d{3}\s-->\s\d{2}:\d{2}:\d{2}[,\.]\d{3}/.test(l))
+    // strip tags and trim
+    .map(l => l.replace(/<[^>]*>/g, '').trim())
+    // drop empty
+    .filter(Boolean);
+
+  const text = lines.join(' ').replace(/\s+/g, ' ').trim();
+
+  console.log("finihsed, starting ai query");
+
+  const response = await AIclient.chat.completions.create({
+    model: model,
+    reasoning_effort: "low",
+    service_tier: "flex",
+    verbosity: "medium",
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt.replace("YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.","")
+          .replace("YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.","")
+      },
+      {
+        role: "system",
+        content: "Following is the youtube subtitle transcript from a video. Summarize the content of the video:"
+      },
+      {
+        role: "system",
+        content: "Channel: " + info.uploader + " Title: " + info.title + " Transcript: " + text
+      },
+    ]
+  });
+  const output = response.choices[0].message.content;
+
+  return output;
+}
+
+function splitMessage(text, maxLength = 2000) {
+  console.log("splitting string");
+  const chunks = [];
+  const lines = text.split("\n");
+  let currentChunk = "";
+
+  for (const line of lines) {
+    if ((currentChunk + line + "\n").length > maxLength) {
+      chunks.push(currentChunk.trim());
+      currentChunk = "";
+    }
+    currentChunk += line + "\n";
+  }
+
+  if (currentChunk.trim().length > 0) {
+    chunks.push(currentChunk.trim());
+  }
+
+  // Add markers (1/total)
+  return chunks.map((chunk, i) => `(${i + 1}/${chunks.length})\n\n${chunk}`);
 }
