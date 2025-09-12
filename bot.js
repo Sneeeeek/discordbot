@@ -890,6 +890,22 @@ async function getMALdetails(id, es_score) {
 async function youtube(url) {
   console.log("starting youtube feature");
 
+const info = await ytdl(url, {
+  dumpSingleJson: true,
+  skipDownload: true,
+});
+
+if (info.subtitles?.en) {
+  // Manual subtitles exist
+  await ytdl(url, {
+    skipDownload: true,
+    writeSub: true,
+    subLang: 'en',
+    subFormat: 'srt',
+    output: 'transcript.%(ext)s'
+  });
+} else if (info.automatic_captions?.en) {
+  // Only auto captions exist
   await ytdl(url, {
     skipDownload: true,
     writeAutoSub: true,
@@ -897,12 +913,7 @@ async function youtube(url) {
     subFormat: 'srt',
     output: 'transcript.%(ext)s'
   });
-
-  const info = await ytdl(url, {
-  dumpSingleJson: true,
-  skipDownload: true,
-});
-
+}
   const srt = fs.readFileSync("transcript.en.srt", 'utf8');
 
   const lines = srt
