@@ -890,14 +890,19 @@ async function getMALdetails(id, es_score) {
 async function youtube(url) {
   console.log("starting youtube feature");
 
-  const info = await ytdl(url, {
-    dumpSingleJson: true,
+  await ytdl(url, {
     skipDownload: true,
     writeAutoSub: true,
     subLang: 'en',
     subFormat: 'srt',
     output: 'transcript.%(ext)s'
   });
+
+  const info = await ytdl(url, {
+  dumpSingleJson: true,
+  skipDownload: true,
+});
+
   const srt = fs.readFileSync("transcript.en.srt", 'utf8');
 
   const lines = srt
