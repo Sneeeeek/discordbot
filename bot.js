@@ -256,7 +256,15 @@ Currently, my features include:
     console.log("Video: " + url);
     try {
       message.channel.sendTyping();
-      let response = splitMessage(await youtube(url));
+
+      let subs = await youtube(url);
+
+      if (!subs) {
+        message.channel.send("No English subs found.");
+        return; // stop early
+      }
+
+      let response = splitMessage(subs);
 
       response.forEach(element => {
         element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
@@ -894,6 +902,15 @@ const info = await ytdl(url, {
   dumpSingleJson: true,
   skipDownload: true,
 });
+
+  // Step 2: check if any English subtitles exist
+  const hasManual = info.subtitles?.en;
+  const hasAuto = info.automatic_captions?.en;
+
+  if (!hasManual && !hasAuto) {
+    console.warn("No English subtitles available ❌");
+    return; // end early
+  }
 
 if (info.subtitles?.en) {
   // Manual subtitles exist
