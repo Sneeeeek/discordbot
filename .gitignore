@@ -143,5 +143,5 @@ engine.bin
 chatHistory/screenshot.jpeg
 search.js
 ytdl.js
-transcript.en.srt
+*.srt
 output.txt

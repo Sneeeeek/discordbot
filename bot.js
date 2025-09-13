@@ -904,34 +904,41 @@ const info = await ytdl(url, {
 });
 
   // Step 2: check if any English subtitles exist
-  const hasManual = info.subtitles?.en;
-  const hasAuto = info.automatic_captions?.en;
+  const hasManual = findEnglishKey(info.subtitles);
+  const hasAuto = findEnglishKey(info.automatic_captions);
+  let filename;
+
+  console.log(hasManual);
+  console.log(hasAuto);
 
   if (!hasManual && !hasAuto) {
     console.warn("No English subtitles available ❌");
     return; // end early
   }
 
-if (info.subtitles?.en) {
+if (hasManual) {
   // Manual subtitles exist
   await ytdl(url, {
     skipDownload: true,
     writeSub: true,
-    subLang: 'en',
+    subLang: hasManual,
     subFormat: 'srt',
     output: 'transcript.%(ext)s'
   });
-} else if (info.automatic_captions?.en) {
+  filename = "transcript." + hasManual + ".srt";
+} else if (hasAuto) {
   // Only auto captions exist
   await ytdl(url, {
     skipDownload: true,
     writeAutoSub: true,
-    subLang: 'en',
+    subLang: hasAuto,
     subFormat: 'srt',
     output: 'transcript.%(ext)s'
   });
+  filename = "transcript." + hasAuto + ".srt";
 }
-  const srt = fs.readFileSync("transcript.en.srt", 'utf8');
+
+  const srt = fs.readFileSync(filename, 'utf8');
 
   const lines = srt
     .split(/\r?\n/)
@@ -947,6 +954,8 @@ if (info.subtitles?.en) {
   const text = lines.join(' ').replace(/\s+/g, ' ').trim();
 
   console.log("finihsed, starting ai query");
+
+  // return "hello";
 
   const response = await AIclient.chat.completions.create({
     model: model,
@@ -994,4 +1003,9 @@ function splitMessage(text, maxLength = 2000) {
 
   // Add markers (1/total)
   return chunks.map((chunk, i) => `(${i + 1}/${chunks.length})\n\n${chunk}`);
+}
+
+function findEnglishKey(subs) {
+  if (!subs) return null;
+  return Object.keys(subs).find(lang => lang.startsWith("en"));
 }
