@@ -242,7 +242,7 @@ Currently, my features include:
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!mal")) {
     let searchPhrase = message.content.replace(/<@!?(\d+)>/g, '').replace("!mal", "").trim();
-    console.log("Seach phrase: " + searchPhrase);
+    console.log("Search phrase: " + searchPhrase);
     try {
       message.reply({ embeds: [await getMAL(searchPhrase)], allowedMentions: { parse: ["users", "roles"] } });
     } catch (error) {
@@ -276,6 +276,8 @@ Currently, my features include:
 
     } catch (error) {
       console.error(error);
+      message.channel.send(error.message);
+      message.channel.send(error);
     }
     return;
   }
