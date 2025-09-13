@@ -276,7 +276,6 @@ Currently, my features include:
 
     } catch (error) {
       console.error(error);
-      message.channel.send(error.message);
       message.channel.send(error);
     }
     return;
@@ -493,7 +492,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       }
     });
   } else {
-    chatHistoryArray.slice(-11, -1).forEach(element => {
+    chatHistoryArray.slice(-16, -1).forEach(element => {
       if (element.username === "Leif" || element.username === "Feixiao") {
         APImessages.push({
           role: "assistant",
