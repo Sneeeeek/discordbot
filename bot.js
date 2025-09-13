@@ -925,9 +925,9 @@ async function youtube(url) {
       writeSub: true,
       subLang: hasManual,
       subFormat: 'srt',
-      output: 'transcript.%(ext)s'
+      output: 'chatHistory/transcript.%(ext)s'
     });
-    filename = "transcript." + hasManual + ".srt";
+    filename = "chatHistory/transcript." + hasManual + ".srt";
   } else if (hasAuto) {
     // Only auto captions exist
     await ytdl(url, {
@@ -935,9 +935,9 @@ async function youtube(url) {
       writeAutoSub: true,
       subLang: hasAuto,
       subFormat: 'srt',
-      output: 'transcript.%(ext)s'
+      output: 'chatHistory/transcript.%(ext)s'
     });
-    filename = "transcript." + hasAuto + ".srt";
+    filename = "chatHistory/transcript." + hasAuto + ".srt";
   }
 
   const srt = fs.readFileSync(filename, 'utf8');
