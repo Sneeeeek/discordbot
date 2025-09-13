@@ -7,6 +7,6 @@ RUN apt-get update && \
 WORKDIR /app
 COPY package.json .
 RUN npm install
-COPY ytdl.js .
+COPY bot.js .
 
-CMD ["node", "ytdl.js"]
+CMD ["node", "bot.js"]
