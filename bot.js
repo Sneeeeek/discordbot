@@ -898,10 +898,10 @@ async function getMALdetails(id, es_score) {
 async function youtube(url) {
   console.log("starting youtube feature");
 
-const info = await ytdl(url, {
-  dumpSingleJson: true,
-  skipDownload: true,
-});
+  const info = await ytdl(url, {
+    dumpSingleJson: true,
+    skipDownload: true,
+  });
 
   // Step 2: check if any English subtitles exist
   const hasManual = findEnglishKey(info.subtitles);
@@ -916,27 +916,27 @@ const info = await ytdl(url, {
     return; // end early
   }
 
-if (hasManual) {
-  // Manual subtitles exist
-  await ytdl(url, {
-    skipDownload: true,
-    writeSub: true,
-    subLang: hasManual,
-    subFormat: 'srt',
-    output: 'transcript.%(ext)s'
-  });
-  filename = "transcript." + hasManual + ".srt";
-} else if (hasAuto) {
-  // Only auto captions exist
-  await ytdl(url, {
-    skipDownload: true,
-    writeAutoSub: true,
-    subLang: hasAuto,
-    subFormat: 'srt',
-    output: 'transcript.%(ext)s'
-  });
-  filename = "transcript." + hasAuto + ".srt";
-}
+  if (hasManual) {
+    // Manual subtitles exist
+    await ytdl(url, {
+      skipDownload: true,
+      writeSub: true,
+      subLang: hasManual,
+      subFormat: 'srt',
+      output: 'transcript.%(ext)s'
+    });
+    filename = "transcript." + hasManual + ".srt";
+  } else if (hasAuto) {
+    // Only auto captions exist
+    await ytdl(url, {
+      skipDownload: true,
+      writeAutoSub: true,
+      subLang: hasAuto,
+      subFormat: 'srt',
+      output: 'transcript.%(ext)s'
+    });
+    filename = "transcript." + hasAuto + ".srt";
+  }
 
   const srt = fs.readFileSync(filename, 'utf8');
 
@@ -965,8 +965,8 @@ if (hasManual) {
     messages: [
       {
         role: "system",
-        content: systemPrompt.replace("YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.","")
-          .replace("YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.","")
+        content: systemPrompt.replace("YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.", "")
+          .replace("YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.", "")
       },
       {
         role: "system",
@@ -1002,7 +1002,7 @@ function splitMessage(text, maxLength = 2000) {
   }
 
   // Add markers (1/total)
-  return chunks.map((chunk, i) => `(${i + 1}/${chunks.length})\n\n${chunk}`);
+  return chunks.map((chunk, i) => `(${i + 1}/${chunks.length})\n${chunk}`);
 }
 
 function findEnglishKey(subs) {
