@@ -318,7 +318,7 @@ Currently, my features include:
       }
     } else {
       console.log("response was shorter than 2000");
-      message.reply({ content: outputVariable, allowedMentions: { parse: ["users", "roles"] } });
+      message.reply({ content: messageVariable, allowedMentions: { parse: ["users", "roles"] } });
     }
 
   } catch (error) {
