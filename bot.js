@@ -414,7 +414,8 @@ Your primary goal is to provide an immersive and engaging experience for users, 
 Do your best to make your responses around the same lenght as the user's message. If the user is brief, you will also be brief, if the user is long, you will also be long.
 Your job is not to be a helpful bot, your job is to act like a real person would as much as possible. Do not give unsolicited advice.
 DO NOT USE "—", DO NOT USE THE EM DASH at all.
-
+YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
+YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
 Connect clauses directly, don't use em dashes. 
 Keep your responses brief unless the lenght is required.
 WHEN WRITING CODE, USE MARKDOWN CODE BLOCKS.
@@ -457,6 +458,7 @@ const keywords = {
 };
 
 async function queryOpenAI(userInput, attachment, reply) {
+  let curIMG;
   const APImessages = [
     {
       role: "system",
@@ -517,10 +519,27 @@ async function queryOpenAI(userInput, attachment, reply) {
           content: element.content,
         })
       } else {
-        APImessages.push({
-          role: "user",
-          content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-        })
+        if (curIMG) {
+          APImessages.push({
+            role: "user",
+            content: [
+              {
+                "type": "text",
+                "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+              },
+              {
+                "type": "image_url",
+                image_url: { url: curIMG },
+              },
+            ],
+          })
+
+        } else {
+          APImessages.push({
+            role: "user",
+            content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+          })
+        }
       }
     });
 
@@ -539,6 +558,8 @@ async function queryOpenAI(userInput, attachment, reply) {
           },
         ],
       })
+      curIMG = attachment;
+
     } else if (reply) {
       APImessages.push({
         role: "user",
@@ -584,6 +605,7 @@ async function queryOpenAI(userInput, attachment, reply) {
               },
             ]
           })
+          curIMG = embedPost.embeds[0].data.image;
         } else if (embedPost.embeds[0].data.thumbnail) {
           console.log("rich embed with image");
           APImessages.push({
@@ -600,6 +622,7 @@ async function queryOpenAI(userInput, attachment, reply) {
               },
             ]
           })
+          curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("rich embed without image");
           APImessages.push({
@@ -627,6 +650,7 @@ async function queryOpenAI(userInput, attachment, reply) {
               },
             ]
           })
+          curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("article embed without thumbnail");
           APImessages.push({
@@ -655,6 +679,7 @@ async function queryOpenAI(userInput, attachment, reply) {
             },
           ]
         })
+        curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
       case "link":
@@ -674,13 +699,13 @@ async function queryOpenAI(userInput, attachment, reply) {
             },
           ]
         })
+        curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
       default:
         console.log("unknown embed, its not rich, article, video, or link")
         break;
     }
-
 
   } else {
     console.log("no embed");
@@ -699,10 +724,12 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
   });
 
-  APImessages.push({
-    role: "system",
-    content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
-  })
+  if (DBKnowledgeBase) {
+    APImessages.push({
+      role: "system",
+      content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
+    })
+  }
 
   let output;
 
@@ -736,14 +763,25 @@ async function queryOpenAI(userInput, attachment, reply) {
   }
   // output = "hello!";
 
+  fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
-  let contentToAppend
+  let contentToAppend;
   // Append the AI's response to the chat history
-  contentToAppend = {
-    "username": "" + client.user.username + "",
-    "date": "" + new Date(Date.now()).toUTCString() + "",
-    "message": "" + output + ""
+  if (curIMG) {
+    contentToAppend = {
+      "username": "" + client.user.username + "",
+      "date": "" + new Date(Date.now()).toUTCString() + "",
+      "message": "" + output + "",
+      "image": curIMG
+    }
+  } else {
+    contentToAppend = {
+      "username": "" + client.user.username + "",
+      "date": "" + new Date(Date.now()).toUTCString() + "",
+      "message": "" + output + "",
+    }
   }
+
   chatHistoryArray.push(contentToAppend);
 
   // animal tags
