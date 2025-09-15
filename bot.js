@@ -133,7 +133,7 @@ client.on("messageCreate", async (message) => {
           mentioned(message, null, repliedMessage);
         } else {
           console.log("there is a reply, but no attachemnt.");
-          mentioned(message);
+          mentioned(message, null, repliedMessage, true);
         }
       } else {
         mentioned(message);
@@ -145,7 +145,7 @@ client.on("messageCreate", async (message) => {
 
 client.login(token);
 
-async function mentioned(message, attachment, reply) {
+async function mentioned(message, attachment, reply, isFeixiao) {
   const aboutText =
     `
 Hello, <@${message.author.id}>! I am Feixiao, the Lacking General from *Honkai: Star Rail*.
@@ -283,16 +283,8 @@ Currently, my features include:
 
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
-    let contentToAppend;
-    contentToAppend = {
-      "username": "" + message.member.displayName + "",
-      "date": "" + new Date(message.createdTimestamp).toUTCString() + "",
-      "message": "" + message.content + ""
-    },
 
       await message.channel.sendTyping();
-
-    chatHistoryArray.push(contentToAppend);
 
     let messageVariable;
 
@@ -302,7 +294,7 @@ Currently, my features include:
     }
     else if (reply) {
       console.log("query with reply.");
-      messageVariable = await queryOpenAI(message, null, reply);
+      messageVariable = await queryOpenAI(message, null, reply, isFeixiao);
     }
     else {
       console.log("query with no image.");
@@ -414,7 +406,8 @@ Your primary goal is to provide an immersive and engaging experience for users, 
 Do your best to make your responses around the same lenght as the user's message. If the user is brief, you will also be brief, if the user is long, you will also be long.
 Your job is not to be a helpful bot, your job is to act like a real person would as much as possible. Do not give unsolicited advice.
 DO NOT USE "—", DO NOT USE THE EM DASH at all.
-
+YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
+YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
 Connect clauses directly, don't use em dashes. 
 Keep your responses brief unless the lenght is required.
 WHEN WRITING CODE, USE MARKDOWN CODE BLOCKS.
@@ -456,7 +449,10 @@ const keywords = {
   "build": buildText
 };
 
-async function queryOpenAI(userInput, attachment, reply) {
+async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
+  let curIMG;
+  let contentToAppendUser;
+
   const APImessages = [
     {
       role: "system",
@@ -467,10 +463,15 @@ async function queryOpenAI(userInput, attachment, reply) {
   let repliedNick;
 
   if (reply) {
-    repliedNick = reply.member.displayName + " (pref. pronoun: " + userDataObj[reply.author.id] + ")";
-    console.log("id: " + reply.author.id)
-    console.log("found reply entry: " + userDataObj[reply.author.id]);
-    console.log("reply nick: " + repliedNick);
+    if (userDataObj[reply.author.id]) {
+      repliedNick = reply.member.displayName + " (pref. pronoun: " + userDataObj[reply.author.id] + ")";
+      console.log("id: " + reply.author.id)
+      console.log("found reply entry: " + userDataObj[reply.author.id]);
+      console.log("reply nick: " + repliedNick);
+    } else {
+      repliedNick = reply.member.displayName;
+      console.log("no pref.")
+    }
   }
 
   if (userDataObj[userInput.author.id]) {
@@ -479,88 +480,12 @@ async function queryOpenAI(userInput, attachment, reply) {
     console.log("new nick: " + nickname);
   }
 
-  let channelHistoryArray;
-  if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
-    const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
-    channelHistoryArray = [...channelHistory.values()];
-    channelHistoryArray.reverse().forEach(element => {
-      if (element.author.username === "Snek dev bot" || element.username === "Feixiao") {
-        APImessages.push({
-          role: "assistant",
-          content: element.content,
-        })
-      } else {
-        try {
-          APImessages.push({
-            role: "user",
-            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
-          })
-        } catch (error) {
-          APImessages.push({
-            role: "user",
-            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
-          })
-        }
-      }
-    });
-  } else {
-    chatHistoryArray.slice(-16, -1).forEach(element => {
-      if (element.username === "Leif" || element.username === "Feixiao") {
-        APImessages.push({
-          role: "assistant",
-          content: element.message,
-        })
-      } else if (element.username === "system") {
-        // console.log("system message is included");
-        APImessages.push({
-          role: "system",
-          content: element.content,
-        })
-      } else {
-        APImessages.push({
-          role: "user",
-          content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-        })
-      }
-    });
-
-    if (attachment) {
-      console.log(attachment.slice(0, 50));
-      APImessages.push({
-        role: "user",
-        content: [
-          {
-            "type": "text",
-            "text": nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-          },
-          {
-            "type": "image_url",
-            image_url: { url: attachment },
-          },
-        ],
-      })
-    } else if (reply) {
-      APImessages.push({
-        role: "user",
-        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
-      })
-      console.log("message is a reply to another user")
-    } else {
-      APImessages.push({
-        role: "user",
-        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-      })
-      console.log("attachment is not present")
-    }
-  }
-
   let embedPost;
   if (reply) {
     embedPost = reply;
   } else {
     embedPost = userInput;
   }
-
 
   if (typeof embedPost.embeds[0] != "undefined") {
     console.log("found an embed");
@@ -584,6 +509,7 @@ async function queryOpenAI(userInput, attachment, reply) {
               },
             ]
           })
+          curIMG = embedPost.embeds[0].data.image;
         } else if (embedPost.embeds[0].data.thumbnail) {
           console.log("rich embed with image");
           APImessages.push({
@@ -600,6 +526,7 @@ async function queryOpenAI(userInput, attachment, reply) {
               },
             ]
           })
+          curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("rich embed without image");
           APImessages.push({
@@ -627,6 +554,7 @@ async function queryOpenAI(userInput, attachment, reply) {
               },
             ]
           })
+          curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("article embed without thumbnail");
           APImessages.push({
@@ -655,6 +583,7 @@ async function queryOpenAI(userInput, attachment, reply) {
             },
           ]
         })
+        curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
       case "link":
@@ -674,13 +603,13 @@ async function queryOpenAI(userInput, attachment, reply) {
             },
           ]
         })
+        curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
       default:
         console.log("unknown embed, its not rich, article, video, or link")
         break;
     }
-
 
   } else {
     console.log("no embed");
@@ -699,10 +628,131 @@ async function queryOpenAI(userInput, attachment, reply) {
     }
   });
 
-  APImessages.push({
-    role: "system",
-    content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
-  })
+  if (DBKnowledgeBase) {
+    APImessages.push({
+      role: "system",
+      content: "Keywords found in knowledge base: \n" + DBKnowledgeBase
+    })
+  }
+
+  let channelHistoryArray;
+  if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
+    const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
+    channelHistoryArray = [...channelHistory.values()];
+    channelHistoryArray.reverse().forEach(element => {
+      if (element.author.username === "Snek dev bot" || element.username === "Feixiao") {
+        APImessages.push({
+          role: "assistant",
+          content: element.content,
+        })
+      } else {
+        try {
+          APImessages.push({
+            role: "user",
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
+          })
+        } catch (error) {
+          APImessages.push({
+            role: "user",
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
+          })
+        }
+      }
+    });
+  } else {
+    chatHistoryArray.slice(-16).forEach(element => {
+      if (element.username === "Snek dev bot" || element.username === "Feixiao") {
+        APImessages.push({
+          role: "assistant",
+          content: element.message,
+        })
+      } else if (element.username === "system") {
+        // console.log("system message is included");
+        APImessages.push({
+          role: "system",
+          content: element.content,
+        })
+      } else {
+        if (element.image) {
+          APImessages.push({
+            role: "user",
+            content: [
+              {
+                "type": "text",
+                "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+              },
+              {
+                "type": "image_url",
+                image_url: { url: element.image },
+              },
+            ],
+          })
+        } else {
+          APImessages.push({
+            role: "user",
+            content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+          })
+        }
+      }
+    });
+
+    if (attachment) {
+      console.log(attachment.slice(0, 50));
+      APImessages.push({
+        role: "user",
+        content: [
+          {
+            "type": "text",
+            "text": nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+          },
+          {
+            "type": "image_url",
+            image_url: { url: attachment },
+          },
+        ],
+      })
+      curIMG = attachment;
+
+    } else if (reply && !isFeixiao) {
+      APImessages.push({
+        role: "user",
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
+      })
+      console.log("message is a reply to another user");
+
+    } else if (reply && isFeixiao) {
+      APImessages.push({
+        role: "user",
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
+        // content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content.slice(0,1200) + "...(message truncated)" + "] " + userInput.content
+      })
+      console.log("message is a reply to another user");
+    } else {
+      APImessages.push({
+        role: "user",
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+      })
+      console.log("attachment is not present");
+    }
+  }
+
+    if (curIMG) {
+      contentToAppendUser = {
+        "username": "" + userInput.member.displayName + "",
+        "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
+        "message": "" + userInput.content + "",
+        "image": "" + curIMG + ""
+      }
+      chatHistoryArray.push(contentToAppendUser);
+    } else {
+      contentToAppendUser = {
+        "username": "" + userInput.member.displayName + "",
+        "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
+        "message": "" + userInput.content + ""
+      }
+      chatHistoryArray.push(contentToAppendUser);
+    }
+
 
   let output;
 
@@ -736,14 +786,17 @@ async function queryOpenAI(userInput, attachment, reply) {
   }
   // output = "hello!";
 
+  // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
-  let contentToAppend
+  let contentToAppend;
   // Append the AI's response to the chat history
+
   contentToAppend = {
     "username": "" + client.user.username + "",
     "date": "" + new Date(Date.now()).toUTCString() + "",
-    "message": "" + output + ""
+    "message": "" + output + "",
   }
+
   chatHistoryArray.push(contentToAppend);
 
   // animal tags
@@ -844,19 +897,6 @@ function addEmote(emoteInner) {
 // 
 // curl https://api.myanimelist.net/v2/anime/10357?fields=rank,mean,alternative_titles 
 // -H "X-MAL-CLIENT-ID: malClientID"
-
-// async function getMAL(searchPhrase) {
-//   const { data } = await axios.get("https://myanimelist.net/search/prefix.json?type=all&keyword=" + searchPhrase);
-//   // console.log(data);
-//   const items = data.categories[0].items;
-//   console.log(items[0]);
-//   let returnString = items[0];
-//   // returnString = items.map(element => element.name).join(", ");
-//   // array.forEach(element => {
-//   //   returnString += element.name + " "
-//   // });
-//   return JSON.stringify(returnString, null, 2);
-// }
 
 async function getMAL(searchPhrase) {
   const { data } = await axios.get("https://myanimelist.net/search/prefix.json?type=all&keyword=" + searchPhrase);
