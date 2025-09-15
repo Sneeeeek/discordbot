@@ -38,7 +38,7 @@ function textToArray(message) {
   const data = fs.readFileSync(filePath, 'utf-8');
 
   if (data.trim() === '') {
-    console.error('File is empty.');
+    console.error('chatHistory is empty.');
     chatHistoryArray = [];
     return;
   }
@@ -60,7 +60,7 @@ async function loadUserData() {
   const data = fs.readFileSync(filePath, 'utf-8');
 
   if (data.trim() === '') {
-    console.error('File is empty.');
+    console.error('userData is empty.');
     userDataObj = {};
     return;
   }
@@ -81,7 +81,7 @@ async function loadServerData() {
   const data = fs.readFileSync(filePath, 'utf-8');
 
   if (data.trim() === '') {
-    console.error('File is empty.');
+    console.error('serverData is empty.');
     serverDataObj = {};
     return;
   }
@@ -294,20 +294,33 @@ Currently, my features include:
 
     chatHistoryArray.push(contentToAppend);
 
+    let messageVariable;
+
     if (attachment) {
       console.log("query with image.");
-      message.reply({ content: await queryOpenAI(message, attachment), allowedMentions: { parse: ["users", "roles"] } });
+      messageVariable = await queryOpenAI(message, attachment);
     }
     else if (reply) {
       console.log("query with reply.");
-      message.reply({ content: await queryOpenAI(message, null, reply), allowedMentions: { parse: ["users", "roles"] } });
+      messageVariable = await queryOpenAI(message, null, reply);
     }
     else {
       console.log("query with no image.");
-      message.reply({ content: await queryOpenAI(message), allowedMentions: { parse: ["users", "roles"] } });
+      messageVariable = await queryOpenAI(message);
       // console.log("pinged");
-
     }
+
+    if (Array.isArray(messageVariable)) {
+      console.log("response was longer than 2000, splitting");
+      message.reply({ content: messageVariable[0], allowedMentions: { parse: ["users", "roles"] } });
+      for (let index = 1; index < messageVariable.length; index++) {
+        message.channel.send(messageVariable[index]);
+      }
+    } else {
+      console.log("response was shorter than 2000");
+      message.reply({ content: outputVariable, allowedMentions: { parse: ["users", "roles"] } });
+    }
+
   } catch (error) {
     console.log(error);
     // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
@@ -401,8 +414,7 @@ Your primary goal is to provide an immersive and engaging experience for users, 
 Do your best to make your responses around the same lenght as the user's message. If the user is brief, you will also be brief, if the user is long, you will also be long.
 Your job is not to be a helpful bot, your job is to act like a real person would as much as possible. Do not give unsolicited advice.
 DO NOT USE "—", DO NOT USE THE EM DASH at all.
-YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
-YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
+
 Connect clauses directly, don't use em dashes. 
 Keep your responses brief unless the lenght is required.
 WHEN WRITING CODE, USE MARKDOWN CODE BLOCKS.
@@ -410,6 +422,8 @@ Use markdown where appropriate.
 You do NOT have any admin privileges, you are merely a standard typical user. Do NOT call on mods to take action on someone.
 Yukong is feixiaos girlfriend.
 `;
+// YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
+// YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
 // If someone asks you for advice on feixiao, DO NOT ANSWER IT. JUST ADD THE <build> TAG WHEN THEY ARE RELEVANT. PLACE ONLY THE <build> TAG. The tag will be replaced with brief writeups on builds or teams.
 
@@ -755,7 +769,7 @@ async function queryOpenAI(userInput, attachment, reply) {
       console.log('Chat history updated successfully.');
     }
   })
-  if (output.length + 50 > 1999) { return "(Response too long, it has been truncated)\n" + output.slice(0, 1950); } else { return output; }
+  if (output.length + 45 > 1999) { return splitMessage(output); } else { return output; }
 }
 
 async function sendDMtoSnek(userInput) {
