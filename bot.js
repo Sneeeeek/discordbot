@@ -133,7 +133,7 @@ client.on("messageCreate", async (message) => {
           mentioned(message, null, repliedMessage);
         } else {
           console.log("there is a reply, but no attachemnt.");
-          mentioned(message);
+          mentioned(message, null, repliedMessage, true);
         }
       } else {
         mentioned(message);
@@ -145,7 +145,7 @@ client.on("messageCreate", async (message) => {
 
 client.login(token);
 
-async function mentioned(message, attachment, reply) {
+async function mentioned(message, attachment, reply, isFeixiao) {
   const aboutText =
     `
 Hello, <@${message.author.id}>! I am Feixiao, the Lacking General from *Honkai: Star Rail*.
@@ -283,16 +283,8 @@ Currently, my features include:
 
   try {
     // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
-    let contentToAppend;
-    contentToAppend = {
-      "username": "" + message.member.displayName + "",
-      "date": "" + new Date(message.createdTimestamp).toUTCString() + "",
-      "message": "" + message.content + ""
-    },
 
       await message.channel.sendTyping();
-
-    chatHistoryArray.push(contentToAppend);
 
     let messageVariable;
 
@@ -302,7 +294,7 @@ Currently, my features include:
     }
     else if (reply) {
       console.log("query with reply.");
-      messageVariable = await queryOpenAI(message, null, reply);
+      messageVariable = await queryOpenAI(message, null, reply, isFeixiao);
     }
     else {
       console.log("query with no image.");
@@ -457,8 +449,10 @@ const keywords = {
   "build": buildText
 };
 
-async function queryOpenAI(userInput, attachment, reply) {
+async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
   let curIMG;
+  let contentToAppendUser;
+
   const APImessages = [
     {
       role: "system",
@@ -469,10 +463,15 @@ async function queryOpenAI(userInput, attachment, reply) {
   let repliedNick;
 
   if (reply) {
-    repliedNick = reply.member.displayName + " (pref. pronoun: " + userDataObj[reply.author.id] + ")";
-    console.log("id: " + reply.author.id)
-    console.log("found reply entry: " + userDataObj[reply.author.id]);
-    console.log("reply nick: " + repliedNick);
+    if (userDataObj[reply.author.id]) {
+      repliedNick = reply.member.displayName + " (pref. pronoun: " + userDataObj[reply.author.id] + ")";
+      console.log("id: " + reply.author.id)
+      console.log("found reply entry: " + userDataObj[reply.author.id]);
+      console.log("reply nick: " + repliedNick);
+    } else {
+      repliedNick = reply.member.displayName;
+      console.log("no pref.")
+    }
   }
 
   if (userDataObj[userInput.author.id]) {
@@ -481,107 +480,12 @@ async function queryOpenAI(userInput, attachment, reply) {
     console.log("new nick: " + nickname);
   }
 
-  let channelHistoryArray;
-  if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
-    const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
-    channelHistoryArray = [...channelHistory.values()];
-    channelHistoryArray.reverse().forEach(element => {
-      if (element.author.username === "Snek dev bot" || element.username === "Feixiao") {
-        APImessages.push({
-          role: "assistant",
-          content: element.content,
-        })
-      } else {
-        try {
-          APImessages.push({
-            role: "user",
-            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
-          })
-        } catch (error) {
-          APImessages.push({
-            role: "user",
-            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
-          })
-        }
-      }
-    });
-  } else {
-    chatHistoryArray.slice(-16, -1).forEach(element => {
-      if (element.username === "Leif" || element.username === "Feixiao") {
-        APImessages.push({
-          role: "assistant",
-          content: element.message,
-        })
-      } else if (element.username === "system") {
-        // console.log("system message is included");
-        APImessages.push({
-          role: "system",
-          content: element.content,
-        })
-      } else {
-        if (curIMG) {
-          APImessages.push({
-            role: "user",
-            content: [
-              {
-                "type": "text",
-                "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-              },
-              {
-                "type": "image_url",
-                image_url: { url: curIMG },
-              },
-            ],
-          })
-
-        } else {
-          APImessages.push({
-            role: "user",
-            content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-          })
-        }
-      }
-    });
-
-    if (attachment) {
-      console.log(attachment.slice(0, 50));
-      APImessages.push({
-        role: "user",
-        content: [
-          {
-            "type": "text",
-            "text": nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-          },
-          {
-            "type": "image_url",
-            image_url: { url: attachment },
-          },
-        ],
-      })
-      curIMG = attachment;
-
-    } else if (reply) {
-      APImessages.push({
-        role: "user",
-        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
-      })
-      console.log("message is a reply to another user")
-    } else {
-      APImessages.push({
-        role: "user",
-        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
-      })
-      console.log("attachment is not present")
-    }
-  }
-
   let embedPost;
   if (reply) {
     embedPost = reply;
   } else {
     embedPost = userInput;
   }
-
 
   if (typeof embedPost.embeds[0] != "undefined") {
     console.log("found an embed");
@@ -731,6 +635,125 @@ async function queryOpenAI(userInput, attachment, reply) {
     })
   }
 
+  let channelHistoryArray;
+  if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
+    const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
+    channelHistoryArray = [...channelHistory.values()];
+    channelHistoryArray.reverse().forEach(element => {
+      if (element.author.username === "Snek dev bot" || element.username === "Feixiao") {
+        APImessages.push({
+          role: "assistant",
+          content: element.content,
+        })
+      } else {
+        try {
+          APImessages.push({
+            role: "user",
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + element.content.replace(/<@!?(\d+)>/g, '').trim(),
+          })
+        } catch (error) {
+          APImessages.push({
+            role: "user",
+            content: element.author.username + ", (" + new Date(element.createdTimestamp).toUTCString() + "): " + "[There was an attachment here, but its unsupported, so it was removed.]",
+          })
+        }
+      }
+    });
+  } else {
+    chatHistoryArray.slice(-16).forEach(element => {
+      if (element.username === "Snek dev bot" || element.username === "Feixiao") {
+        APImessages.push({
+          role: "assistant",
+          content: element.message,
+        })
+      } else if (element.username === "system") {
+        // console.log("system message is included");
+        APImessages.push({
+          role: "system",
+          content: element.content,
+        })
+      } else {
+        if (element.image) {
+          APImessages.push({
+            role: "user",
+            content: [
+              {
+                "type": "text",
+                "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+              },
+              {
+                "type": "image_url",
+                image_url: { url: element.image },
+              },
+            ],
+          })
+        } else {
+          APImessages.push({
+            role: "user",
+            content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+          })
+        }
+      }
+    });
+
+    if (attachment) {
+      console.log(attachment.slice(0, 50));
+      APImessages.push({
+        role: "user",
+        content: [
+          {
+            "type": "text",
+            "text": nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+          },
+          {
+            "type": "image_url",
+            image_url: { url: attachment },
+          },
+        ],
+      })
+      curIMG = attachment;
+
+    } else if (reply && !isFeixiao) {
+      APImessages.push({
+        role: "user",
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
+      })
+      console.log("message is a reply to another user");
+
+    } else if (reply && isFeixiao) {
+      APImessages.push({
+        role: "user",
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content + "] " + userInput.content
+        // content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + "replied to [" + repliedNick + ", (" + new Date(reply.createdTimestamp).toUTCString() + "): " + reply.content.slice(0,1200) + "...(message truncated)" + "] " + userInput.content
+      })
+      console.log("message is a reply to another user");
+    } else {
+      APImessages.push({
+        role: "user",
+        content: nickname + ", (" + new Date(Date.now()).toUTCString() + "): " + userInput.content.replace(/<@!?(\d+)>/g, '').trim()
+      })
+      console.log("attachment is not present");
+    }
+  }
+
+    if (curIMG) {
+      contentToAppendUser = {
+        "username": "" + userInput.member.displayName + "",
+        "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
+        "message": "" + userInput.content + "",
+        "image": "" + curIMG + ""
+      }
+      chatHistoryArray.push(contentToAppendUser);
+    } else {
+      contentToAppendUser = {
+        "username": "" + userInput.member.displayName + "",
+        "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
+        "message": "" + userInput.content + ""
+      }
+      chatHistoryArray.push(contentToAppendUser);
+    }
+
+
   let output;
 
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!think")) {
@@ -763,23 +786,15 @@ async function queryOpenAI(userInput, attachment, reply) {
   }
   // output = "hello!";
 
-  fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
+  // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
   let contentToAppend;
   // Append the AI's response to the chat history
-  if (curIMG) {
-    contentToAppend = {
-      "username": "" + client.user.username + "",
-      "date": "" + new Date(Date.now()).toUTCString() + "",
-      "message": "" + output + "",
-      "image": curIMG
-    }
-  } else {
-    contentToAppend = {
-      "username": "" + client.user.username + "",
-      "date": "" + new Date(Date.now()).toUTCString() + "",
-      "message": "" + output + "",
-    }
+
+  contentToAppend = {
+    "username": "" + client.user.username + "",
+    "date": "" + new Date(Date.now()).toUTCString() + "",
+    "message": "" + output + "",
   }
 
   chatHistoryArray.push(contentToAppend);
@@ -882,19 +897,6 @@ function addEmote(emoteInner) {
 // 
 // curl https://api.myanimelist.net/v2/anime/10357?fields=rank,mean,alternative_titles 
 // -H "X-MAL-CLIENT-ID: malClientID"
-
-// async function getMAL(searchPhrase) {
-//   const { data } = await axios.get("https://myanimelist.net/search/prefix.json?type=all&keyword=" + searchPhrase);
-//   // console.log(data);
-//   const items = data.categories[0].items;
-//   console.log(items[0]);
-//   let returnString = items[0];
-//   // returnString = items.map(element => element.name).join(", ");
-//   // array.forEach(element => {
-//   //   returnString += element.name + " "
-//   // });
-//   return JSON.stringify(returnString, null, 2);
-// }
 
 async function getMAL(searchPhrase) {
   const { data } = await axios.get("https://myanimelist.net/search/prefix.json?type=all&keyword=" + searchPhrase);
