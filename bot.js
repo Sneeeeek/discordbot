@@ -258,7 +258,7 @@ Currently, my features include:
     try {
       message.channel.sendTyping();
 
-      let subs = await youtube(url);
+      let subs = await youtube(url).then(message.channel.sendTyping());
 
       if (!subs) {
         message.channel.send("No English subs found.");
@@ -267,13 +267,17 @@ Currently, my features include:
 
       let response = splitMessage(subs);
 
-      response.forEach(element => {
-        element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-          console.log("emotes found")
-          return addEmote(emoteInner);
+      if (splitMessage.length === 1) {
+        message.channel.send(response[0].replace("(1/1)", "").trim());
+      } else {
+        response.forEach(element => {
+          element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+            console.log("emotes found")
+            return addEmote(emoteInner);
+          });
+          message.channel.send(element);
         });
-        message.channel.send(element);
-      });
+      }
 
     } catch (error) {
       console.error(error);
@@ -1010,30 +1014,33 @@ async function youtube(url) {
   console.log("finihsed, starting ai query");
 
   // return "hello";
-
-  const response = await AIclient.chat.completions.create({
-    model: model,
-    reasoning_effort: "low",
-    service_tier: "flex",
-    verbosity: "medium",
-    messages: [
-      {
-        role: "system",
-        content: systemPrompt.replace("YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.", "")
-          .replace("YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.", "")
-      },
-      {
-        role: "system",
-        content: "Following is the youtube subtitle transcript from a video. Summarize the content of the video:"
-      },
-      {
-        role: "system",
-        content: "Channel: " + info.uploader + " Title: " + info.title + " Transcript: " + text
-      },
-    ]
-  });
-  const output = response.choices[0].message.content;
-
+  let output
+  try {
+    const response = await AIclient.chat.completions.create({
+      model: "modelguy",
+      reasoning_effort: "low",
+      service_tier: "flex",
+      verbosity: "medium",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt.replace("YOU HAVE A HARD LIMIT OF 300 WORDS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.", "")
+            .replace("YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.", "")
+        },
+        {
+          role: "system",
+          content: "Following is the youtube subtitle transcript from a video. Summarize the content of the video:"
+        },
+        {
+          role: "system",
+          content: "Channel: " + info.uploader + " Title: " + info.title + " Transcript: " + text
+        },
+      ]
+    });
+    output = response.choices[0].message.content;
+  } catch (error) {
+    return "OpenAI error:\n" + error;
+  }
   return output;
 }
 
