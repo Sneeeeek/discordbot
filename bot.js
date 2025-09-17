@@ -241,6 +241,14 @@ Currently, my features include:
     return;
   }
 
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!delHistory")) {
+    if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command.") }
+    const rng = Math.floor(1000 + Math.random() * 9000);
+    fs.renameSync("chatHistory/" + message.channelId + ".json", "chatHistory/" + rng + "_" + message.channelId + ".json");
+    message.channel.send("Successfully \"deleted\" history file: \"" + message.channelId + ".json\" -> chatHistory/" + rng + "_" + message.channelId + ".json");
+    return;
+  }
+
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!mal")) {
     let searchPhrase = message.content.replace(/<@!?(\d+)>/g, '').replace("!mal", "").trim();
     console.log("Search phrase: " + searchPhrase);
