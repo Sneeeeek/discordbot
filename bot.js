@@ -745,7 +745,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     }
   }
 
-  if (embedContainer[1].role){console.log("embedContainer is not empty");APImessages.push(embedContainer);}
+  if (embedContainer[0].role){console.log("embedContainer is not empty");APImessages.push(embedContainer);}
     // fs.writeFileSync("testEmbed.json", JSON.stringify(embedContainer, null, 2));
 
     console.log(curIMG);
