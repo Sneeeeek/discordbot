@@ -1017,7 +1017,7 @@ async function youtube(url) {
   let output
   try {
     const response = await AIclient.chat.completions.create({
-      model: "modelguy",
+      model: model,
       reasoning_effort: "low",
       service_tier: "flex",
       verbosity: "medium",
