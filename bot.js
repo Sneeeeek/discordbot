@@ -487,8 +487,10 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
   let embedPost;
   if (reply) {
+    console.log("reply has embed")
     embedPost = reply;
   } else {
+    console.log("message has embed")
     embedPost = userInput;
   }
 
@@ -764,7 +766,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       chatHistoryArray.push(contentToAppendUser);
     }
 
-  fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
+  // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
   let output;
 
@@ -798,7 +800,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
   
   // output = "hello!";
 
-  fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
+  // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
   let contentToAppend;
   // Append the AI's response to the chat history
