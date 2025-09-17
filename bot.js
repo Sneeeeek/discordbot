@@ -492,6 +492,8 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     embedPost = userInput;
   }
 
+  const embedContainer = [{}];
+
   if (typeof embedPost.embeds[0] != "undefined") {
     console.log("found an embed");
     // console.log(embedPost.embeds[0].data);
@@ -500,7 +502,8 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       case "rich":
         if (embedPost.embeds[0].data.image) {
           console.log("rich embed with image");
-          APImessages.push({
+          console.log(embedPost.embeds[0].data.image.url)
+          embedContainer.push({
             role: "system",
             content: [
               {
@@ -514,10 +517,10 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               },
             ]
           })
-          curIMG = embedPost.embeds[0].data.image;
+          curIMG = embedPost.embeds[0].data.image.url;
         } else if (embedPost.embeds[0].data.thumbnail) {
-          console.log("rich embed with image");
-          APImessages.push({
+          console.log("rich embed with image thumbnail");
+          embedContainer.push({
             role: "system",
             content: [
               {
@@ -527,14 +530,14 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               },
               {
                 "type": "image_url",
-                image_url: { url: embedPost.embeds[0].data.thumbnail.url },
+                image_url: { url: embedPost.embeds[0].data.thumbnail },
               },
             ]
           })
           curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("rich embed without image");
-          APImessages.push({
+          embedContainer.push({
             role: "system",
             content: "message includes an embed. Post author: " + embedPost.embeds[0].data.author.name +
               ".\n Post body: " + embedPost.embeds[0].data.description
@@ -545,7 +548,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       case "article":
         if (embedPost.embeds[0].data.thumbnail) {
           console.log("article embed with thumbnail");
-          APImessages.push({
+          embedContainer.push({
             role: "system",
             content: [
               {
@@ -562,7 +565,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
           curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("article embed without thumbnail");
-          APImessages.push({
+          embedContainer.push({
             role: "system",
             content: "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
               ".\n Post body: " + embedPost.embeds[0].data.title
@@ -572,7 +575,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
       case "video":
         console.log("video embed");
-        APImessages.push({
+        embedContainer.push({
           role: "system",
           content: [
             {
@@ -593,7 +596,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
       case "link":
         console.log("link embed");
-        APImessages.push({
+        embedContainer.push({
           role: "system",
           content: [
             {
@@ -741,6 +744,9 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     }
   }
 
+  if (embedContainer[0].role){APImessages.push(embedContainer);}
+
+    console.log(curIMG);
     if (curIMG) {
       contentToAppendUser = {
         "username": "" + userInput.member.displayName + "",
@@ -758,6 +764,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       chatHistoryArray.push(contentToAppendUser);
     }
 
+  fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
   let output;
 
@@ -787,11 +794,11 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     });
     output = response.choices[0].message.content;
     console.log("reasoningchoice = " + reasoningChoice);
-
   }
+  
   // output = "hello!";
 
-  // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
+  fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
   let contentToAppend;
   // Append the AI's response to the chat history
