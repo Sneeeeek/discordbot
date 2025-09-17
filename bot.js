@@ -162,6 +162,7 @@ Currently, my features include:
 - !setpro: you can use !setpro to set a custom pronoun that will be added to your input (if youve set one), to change your set pronoun you just do !setpro again. 
 - !delpro: To delete your custom pronoun, use !delpro.
 - !mal: Look up an anime on MyAnimeList by name. This uses MALs search feature. Anime rated nsfw wont be displayed.
+- !yt: Feixiao will grab the subtitles and attempt to summarise the content of the video. Uses yt-dlp to grab subs.
 - !sob: Use this in a reply to add a sob emote to the replied message.
 - Ask me for a dog or a cat and i will add a random photo of one to my response!
 - I can even use emotes! <:feixiaoIceCream:1384552610161492049>
