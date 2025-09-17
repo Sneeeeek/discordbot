@@ -475,7 +475,6 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       console.log("reply nick: " + repliedNick);
     } else {
       repliedNick = reply.member.displayName;
-      console.log("no pref.")
     }
   }
 
@@ -746,7 +745,8 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     }
   }
 
-  if (embedContainer[0].role){APImessages.push(embedContainer);}
+  if (embedContainer[1].role){console.log("embedContainer is not empty");APImessages.push(embedContainer);}
+    fs.writeFileSync("testEmbed.json", JSON.stringify(embedContainer, null, 2));
 
     console.log(curIMG);
     if (curIMG) {
@@ -770,37 +770,37 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
   let output;
 
-  if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!think")) {
-    const response = await AIclient.chat.completions.create({
-      model: model,
-      reasoning_effort: "medium",
-      // service_tier: "flex",
-      messages: [...APImessages],
-    });
-    output = response.choices[0].message.content;
-    console.log("medium effort");
-  } else {
-    let reasoningChoice;
-    if (serverDataObj[userInput.guildId]) {
-      reasoningChoice = serverDataObj[userInput.guildId];
-    } else {
-      reasoningChoice = "minimal";
-    }
+  // if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!think")) {
+  //   const response = await AIclient.chat.completions.create({
+  //     model: model,
+  //     reasoning_effort: "medium",
+  //     // service_tier: "flex",
+  //     messages: [...APImessages],
+  //   });
+  //   output = response.choices[0].message.content;
+  //   console.log("medium effort");
+  // } else {
+  //   let reasoningChoice;
+  //   if (serverDataObj[userInput.guildId]) {
+  //     reasoningChoice = serverDataObj[userInput.guildId];
+  //   } else {
+  //     reasoningChoice = "minimal";
+  //   }
 
-    const response = await AIclient.chat.completions.create({
-      model: model,
-      reasoning_effort: reasoningChoice,
-      verbosity: "low",
-      // service_tier: "flex",
-      messages: [...APImessages],
-    });
-    output = response.choices[0].message.content;
-    console.log("reasoningchoice = " + reasoningChoice);
-  }
+  //   const response = await AIclient.chat.completions.create({
+  //     model: model,
+  //     reasoning_effort: reasoningChoice,
+  //     verbosity: "low",
+  //     // service_tier: "flex",
+  //     messages: [...APImessages],
+  //   });
+  //   output = response.choices[0].message.content;
+  //   console.log("reasoningchoice = " + reasoningChoice);
+  // }
   
-  // output = "hello!";
+  output = "hello!";
 
-  // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
+  fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
   let contentToAppend;
   // Append the AI's response to the chat history
