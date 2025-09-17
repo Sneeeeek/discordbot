@@ -493,7 +493,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     embedPost = userInput;
   }
 
-  const embedContainer = [{}];
+  let embedContainer;
 
   if (typeof embedPost.embeds[0] != "undefined") {
     console.log("found an embed");
@@ -504,7 +504,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
         if (embedPost.embeds[0].data.image) {
           console.log("rich embed with image");
           console.log(embedPost.embeds[0].data.image.url)
-          embedContainer.push({
+          embedContainer = {
             role: "system",
             content: [
               {
@@ -517,11 +517,11 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
                 image_url: { url: embedPost.embeds[0].data.image.url },
               },
             ]
-          })
+          }
           curIMG = embedPost.embeds[0].data.image.url;
         } else if (embedPost.embeds[0].data.thumbnail) {
           console.log("rich embed with image thumbnail");
-          embedContainer.push({
+          embedContainer={
             role: "system",
             content: [
               {
@@ -534,22 +534,22 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
                 image_url: { url: embedPost.embeds[0].data.thumbnail },
               },
             ]
-          })
+          }
           curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("rich embed without image");
-          embedContainer.push({
+          embedContainer={
             role: "system",
             content: "message includes an embed. Post author: " + embedPost.embeds[0].data.author.name +
               ".\n Post body: " + embedPost.embeds[0].data.description
-          })
+          }
         }
         break;
 
       case "article":
         if (embedPost.embeds[0].data.thumbnail) {
           console.log("article embed with thumbnail");
-          embedContainer.push({
+          embedContainer={
             role: "system",
             content: [
               {
@@ -562,21 +562,21 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
                 image_url: { url: embedPost.embeds[0].data.thumbnail.url },
               },
             ]
-          })
+          }
           curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("article embed without thumbnail");
-          embedContainer.push({
+          embedContainer={
             role: "system",
             content: "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
               ".\n Post body: " + embedPost.embeds[0].data.title
-          })
+          }
         }
         break;
 
       case "video":
         console.log("video embed");
-        embedContainer.push({
+        embedContainer={
           role: "system",
           content: [
             {
@@ -591,13 +591,13 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               image_url: { url: embedPost.embeds[0].data.thumbnail.url },
             },
           ]
-        })
+        }
         curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
       case "link":
         console.log("link embed");
-        embedContainer.push({
+        embedContainer={
           role: "system",
           content: [
             {
@@ -611,7 +611,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               image_url: { url: embedPost.embeds[0].data.thumbnail.url },
             },
           ]
-        })
+        }
         curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
@@ -744,9 +744,14 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       console.log("attachment is not present");
     }
   }
+  
 
-  if (embedContainer[0].role){console.log("embedContainer is not empty");APImessages.push(embedContainer);}
+  if (typeof embedContainer !== "undefined"){
+    console.log("embedContainer is not empty");
     // fs.writeFileSync("testEmbed.json", JSON.stringify(embedContainer, null, 2));
+    APImessages.push(embedContainer);
+  }
+
 
     console.log(curIMG);
     if (curIMG) {
