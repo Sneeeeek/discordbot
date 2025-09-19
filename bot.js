@@ -275,7 +275,11 @@ Currently, my features include:
 
       let response = splitMessage(subs);
 
-      if (splitMessage.length === 1) {
+      if (response.length == 1) {
+        response[0] = response[0].replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+            return addEmote(emoteInner);
+          });
+        console.log("1 lenght");
         message.channel.send(response[0].replace("(1/1)", "").trim());
       } else {
         response.forEach(element => {
@@ -283,6 +287,7 @@ Currently, my features include:
             console.log("emotes found")
             return addEmote(emoteInner);
           });
+          console.log("multi lenght");
           message.channel.send(element);
         });
       }
@@ -1041,7 +1046,7 @@ async function youtube(url) {
     const response = await AIclient.chat.completions.create({
       model: model,
       reasoning_effort: "low",
-      service_tier: "flex",
+      // service_tier: "flex",
       verbosity: "medium",
       messages: [
         {
@@ -1060,6 +1065,8 @@ async function youtube(url) {
       ]
     });
     output = response.choices[0].message.content;
+    // fs.writeFileSync("ytAIresponse.txt", output);
+    // output = "hello!";
   } catch (error) {
     return "OpenAI error:\n" + error;
   }
@@ -1069,15 +1076,15 @@ async function youtube(url) {
 function splitMessage(text, maxLength = 2000) {
   console.log("splitting string");
   const chunks = [];
-  const lines = text.split("\n");
+  const lines = text.split(". ");
   let currentChunk = "";
 
   for (const line of lines) {
-    if ((currentChunk + line + "\n").length > maxLength) {
+    if ((currentChunk + line + ". ").length > maxLength) {
       chunks.push(currentChunk.trim());
       currentChunk = "";
     }
-    currentChunk += line + "\n";
+    currentChunk += line + ". ";
   }
 
   if (currentChunk.trim().length > 0) {
