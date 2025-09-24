@@ -261,41 +261,43 @@ Currently, my features include:
   }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!yt")) {
-    let url = message.content.replace(/<@!?(\d+)>/g, '').replace("!yt", "").trim();
-    console.log("Video: " + url);
-    try {
-      message.channel.sendTyping();
+    message.reply({ content: "Unfortunately, youtube hates fun and has decided to once again make it even harder to grab subtitles. The command will be unavailable for the time being.\n\nhttps://github.com/yt-dlp/yt-dlp/issues/14404"});
 
-      let subs = await youtube(url).then(message.channel.sendTyping());
+    // let url = message.content.replace(/<@!?(\d+)>/g, '').replace("!yt", "").trim();
+    // console.log("Video: " + url);
+    // try {
+    //   message.channel.sendTyping();
 
-      if (!subs) {
-        message.channel.send("No English subs found.");
-        return; // stop early
-      }
+    //   let subs = await youtube(url).then(message.channel.sendTyping());
 
-      let response = splitMessage(subs);
+    //   if (!subs) {
+    //     message.channel.send("No English subs found.");
+    //     return; // stop early
+    //   }
 
-      if (response.length == 1) {
-        response[0] = response[0].replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-            return addEmote(emoteInner);
-          });
-        console.log("1 lenght");
-        message.channel.send(response[0].replace("(1/1)", "").trim());
-      } else {
-        response.forEach(element => {
-          element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-            console.log("emotes found")
-            return addEmote(emoteInner);
-          });
-          console.log("multi lenght");
-          message.channel.send(element);
-        });
-      }
+    //   let response = splitMessage(subs);
 
-    } catch (error) {
-      console.error(error);
-      message.channel.send(error);
-    }
+    //   if (response.length == 1) {
+    //     response[0] = response[0].replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+    //         return addEmote(emoteInner);
+    //       });
+    //     console.log("1 lenght");
+    //     message.channel.send(response[0].replace("(1/1)", "").trim());
+    //   } else {
+    //     response.forEach(element => {
+    //       element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+    //         console.log("emotes found")
+    //         return addEmote(emoteInner);
+    //       });
+    //       console.log("multi lenght");
+    //       message.channel.send(element);
+    //     });
+    //   }
+
+    // } catch (error) {
+    //   console.error(error);
+    //   message.channel.send(error);
+    // }
     return;
   }
 
