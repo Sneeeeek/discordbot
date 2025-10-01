@@ -564,7 +564,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       case "article":
         if (embedPost.embeds[0].data.thumbnail) {
           console.log("article embed with thumbnail");
-          embedContainer={
+          embedContainer = {
             role: "system",
             content: [
               {
@@ -579,9 +579,27 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
             ]
           }
           curIMG = embedPost.embeds[0].data.thumbnail;
+        } else if (embedPost.embeds[0].data.image) {
+          console.log("article embed with image (rxddit)");
+          embedContainer = {
+            role: "system",
+            content: [
+              {
+                "type": "text",
+                "text": "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
+                  ".\n Post body: " + embedPost.embeds[0].data.description + ".\n Post image:"
+              },
+              {
+                "type": "image_url",
+                image_url: { url: embedPost.embeds[0].data.image.url },
+              },
+            ]
+          }
+          curIMG = embedPost.embeds[0].data.image.url;
+
         } else {
           console.log("article embed without thumbnail");
-          embedContainer={
+          embedContainer = {
             role: "system",
             content: "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
               ".\n Post body: " + embedPost.embeds[0].data.title
