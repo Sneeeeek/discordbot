@@ -609,12 +609,14 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
       case "video":
         console.log("video embed");
+        let author;
+        if(typeof embedPost.embeds[0].data.author !== "undefined"){author = embedPost.embeds[0].data.author.name} else {author = embedPost.embeds[0].data.title; console.log("tiktok embed")}
         embedContainer={
           role: "system",
           content: [
             {
               "type": "text",
-              "text": "message includes a video embed. Video author: " + embedPost.embeds[0].data.author.name +
+              "text": "message includes a video embed. Video author: " + author +
                 ".\n Video Title: " + embedPost.embeds[0].data.title +
                 ".\n Video description: " + embedPost.embeds[0].data.description +
                 "\n Video thumbnail: "
@@ -679,7 +681,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
   let channelHistoryArray;
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
-    const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
+    const channelHistory = await userInput.channel.messages.fetch({ limit: 40 });
     channelHistoryArray = [...channelHistory.values()];
     channelHistoryArray.reverse().forEach(element => {
       if (element.author.username === "Snek dev bot" || element.username === "Feixiao") {
