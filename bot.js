@@ -678,26 +678,26 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
           content: element.content,
         })
       } else {
-        if (element.image) {
-          APImessages.push({
-            role: "user",
-            content: [
-              {
-                "type": "text",
-                "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-              },
-              {
-                "type": "image_url",
-                image_url: { url: element.image },
-              },
-            ],
-          })
-        } else {
+        // if (element.image) {
+        //   APImessages.push({
+        //     role: "user",
+        //     content: [
+        //       {
+        //         "type": "text",
+        //         "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+        //       },
+        //       {
+        //         "type": "image_url",
+        //         image_url: { url: element.image },
+        //       },
+        //     ],
+        //   })
+        // } else {
           APImessages.push({
             role: "user",
             content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
           })
-        }
+        // }
       }
     });
 
