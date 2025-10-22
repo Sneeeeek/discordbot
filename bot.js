@@ -89,7 +89,7 @@ async function loadServerData() {
   serverDataObj = JSON.parse(data);
 }
 
-client.on("ready", () => {
+client.on("clientReady", () => {
   console.log("I am ready!");
   myUID = client.user.id;
   // textToArray(); // Load the chat history from the JSON file
@@ -241,6 +241,14 @@ Currently, my features include:
     return;
   }
 
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!delHistory")) {
+    if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command.") }
+    const rng = Math.floor(1000 + Math.random() * 9000);
+    fs.renameSync("chatHistory/" + message.channelId + ".json", "chatHistory/" + rng + "_" + message.channelId + ".json");
+    message.channel.send("Successfully \"deleted\" history file: " + message.channelId + ".json -> chatHistory/" + rng + "_" + message.channelId + ".json");
+    return;
+  }
+
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!mal")) {
     let searchPhrase = message.content.replace(/<@!?(\d+)>/g, '').replace("!mal", "").trim();
     console.log("Search phrase: " + searchPhrase);
@@ -253,6 +261,8 @@ Currently, my features include:
   }
 
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!yt")) {
+    // message.reply({ content: "Unfortunately, youtube hates fun and has decided to once again make it even harder to grab subtitles. The command will be unavailable for the time being.\n\nhttps://github.com/yt-dlp/yt-dlp/issues/14404"});
+
     let url = message.content.replace(/<@!?(\d+)>/g, '').replace("!yt", "").trim();
     console.log("Video: " + url);
     try {
@@ -267,7 +277,11 @@ Currently, my features include:
 
       let response = splitMessage(subs);
 
-      if (splitMessage.length === 1) {
+      if (response.length == 1) {
+        response[0] = response[0].replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+            return addEmote(emoteInner);
+          });
+        console.log("1 lenght");
         message.channel.send(response[0].replace("(1/1)", "").trim());
       } else {
         response.forEach(element => {
@@ -275,6 +289,7 @@ Currently, my features include:
             console.log("emotes found")
             return addEmote(emoteInner);
           });
+          console.log("multi lenght");
           message.channel.send(element);
         });
       }
@@ -475,7 +490,6 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       console.log("reply nick: " + repliedNick);
     } else {
       repliedNick = reply.member.displayName;
-      console.log("no pref.")
     }
   }
 
@@ -487,10 +501,14 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
   let embedPost;
   if (reply) {
+    console.log("reply has embed")
     embedPost = reply;
   } else {
+    console.log("message has embed")
     embedPost = userInput;
   }
+
+  let embedContainer;
 
   if (typeof embedPost.embeds[0] != "undefined") {
     console.log("found an embed");
@@ -500,7 +518,8 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       case "rich":
         if (embedPost.embeds[0].data.image) {
           console.log("rich embed with image");
-          APImessages.push({
+          console.log(embedPost.embeds[0].data.image.url)
+          embedContainer = {
             role: "system",
             content: [
               {
@@ -513,11 +532,11 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
                 image_url: { url: embedPost.embeds[0].data.image.url },
               },
             ]
-          })
-          curIMG = embedPost.embeds[0].data.image;
+          }
+          curIMG = embedPost.embeds[0].data.image.url;
         } else if (embedPost.embeds[0].data.thumbnail) {
-          console.log("rich embed with image");
-          APImessages.push({
+          console.log("rich embed with image thumbnail");
+          embedContainer={
             role: "system",
             content: [
               {
@@ -530,22 +549,22 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
                 image_url: { url: embedPost.embeds[0].data.thumbnail.url },
               },
             ]
-          })
+          }
           curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("rich embed without image");
-          APImessages.push({
+          embedContainer={
             role: "system",
             content: "message includes an embed. Post author: " + embedPost.embeds[0].data.author.name +
               ".\n Post body: " + embedPost.embeds[0].data.description
-          })
+          }
         }
         break;
 
       case "article":
         if (embedPost.embeds[0].data.thumbnail) {
           console.log("article embed with thumbnail");
-          APImessages.push({
+          embedContainer = {
             role: "system",
             content: [
               {
@@ -558,26 +577,46 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
                 image_url: { url: embedPost.embeds[0].data.thumbnail.url },
               },
             ]
-          })
+          }
           curIMG = embedPost.embeds[0].data.thumbnail;
+        } else if (embedPost.embeds[0].data.image) {
+          console.log("article embed with image (rxddit)");
+          embedContainer = {
+            role: "system",
+            content: [
+              {
+                "type": "text",
+                "text": "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
+                  ".\n Post body: " + embedPost.embeds[0].data.description + ".\n Post image:"
+              },
+              {
+                "type": "image_url",
+                image_url: { url: embedPost.embeds[0].data.image.url },
+              },
+            ]
+          }
+          curIMG = embedPost.embeds[0].data.image.url;
+
         } else {
           console.log("article embed without thumbnail");
-          APImessages.push({
+          embedContainer = {
             role: "system",
             content: "message includes an embed. Post origin: " + embedPost.embeds[0].data.url +
               ".\n Post body: " + embedPost.embeds[0].data.title
-          })
+          }
         }
         break;
 
       case "video":
         console.log("video embed");
-        APImessages.push({
+        let author;
+        if(typeof embedPost.embeds[0].data.author !== "undefined"){author = embedPost.embeds[0].data.author.name} else {author = embedPost.embeds[0].data.title; console.log("tiktok embed")}
+        embedContainer={
           role: "system",
           content: [
             {
               "type": "text",
-              "text": "message includes a video embed. Video author: " + embedPost.embeds[0].data.author.name +
+              "text": "message includes a video embed. Video author: " + author +
                 ".\n Video Title: " + embedPost.embeds[0].data.title +
                 ".\n Video description: " + embedPost.embeds[0].data.description +
                 "\n Video thumbnail: "
@@ -587,13 +626,13 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               image_url: { url: embedPost.embeds[0].data.thumbnail.url },
             },
           ]
-        })
+        }
         curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
       case "link":
         console.log("link embed");
-        APImessages.push({
+        embedContainer={
           role: "system",
           content: [
             {
@@ -607,7 +646,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               image_url: { url: embedPost.embeds[0].data.thumbnail.url },
             },
           ]
-        })
+        }
         curIMG = embedPost.embeds[0].data.thumbnail.url;
         break;
 
@@ -642,7 +681,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
   let channelHistoryArray;
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!context")) {
-    const channelHistory = await userInput.channel.messages.fetch({ limit: 20 });
+    const channelHistory = await userInput.channel.messages.fetch({ limit: 40 });
     channelHistoryArray = [...channelHistory.values()];
     channelHistoryArray.reverse().forEach(element => {
       if (element.author.username === "Snek dev bot" || element.username === "Feixiao") {
@@ -678,26 +717,26 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
           content: element.content,
         })
       } else {
-        if (element.image) {
-          APImessages.push({
-            role: "user",
-            content: [
-              {
-                "type": "text",
-                "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-              },
-              {
-                "type": "image_url",
-                image_url: { url: element.image },
-              },
-            ],
-          })
-        } else {
-          APImessages.push({
-            role: "user",
-            content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-          })
-        }
+        // if (element.image) {
+        //   APImessages.push({
+        //     role: "user",
+        //     content: [
+        //       {
+        //         "type": "text",
+        //         "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+        //       },
+        //       {
+        //         "type": "image_url",
+        //         image_url: { url: element.image },
+        //       },
+        //     ],
+        //   })
+        // } else {
+        //   APImessages.push({
+        //     role: "user",
+        //     content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+        //   })
+        // }
       }
     });
 
@@ -740,7 +779,16 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       console.log("attachment is not present");
     }
   }
+  
 
+  if (typeof embedContainer !== "undefined"){
+    console.log("embedContainer is not empty");
+    // fs.writeFileSync("testEmbed.json", JSON.stringify(embedContainer, null, 2));
+    APImessages.push(embedContainer);
+  }
+
+
+    console.log(curIMG);
     if (curIMG) {
       contentToAppendUser = {
         "username": "" + userInput.member.displayName + "",
@@ -758,6 +806,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       chatHistoryArray.push(contentToAppendUser);
     }
 
+  // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
   let output;
 
@@ -787,8 +836,8 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     });
     output = response.choices[0].message.content;
     console.log("reasoningchoice = " + reasoningChoice);
-
   }
+  
   // output = "hello!";
 
   // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
@@ -1019,7 +1068,7 @@ async function youtube(url) {
     const response = await AIclient.chat.completions.create({
       model: model,
       reasoning_effort: "low",
-      service_tier: "flex",
+      // service_tier: "flex",
       verbosity: "medium",
       messages: [
         {
@@ -1038,6 +1087,8 @@ async function youtube(url) {
       ]
     });
     output = response.choices[0].message.content;
+    // fs.writeFileSync("ytAIresponse.txt", output);
+    // output = "hello!";
   } catch (error) {
     return "OpenAI error:\n" + error;
   }
@@ -1047,15 +1098,15 @@ async function youtube(url) {
 function splitMessage(text, maxLength = 2000) {
   console.log("splitting string");
   const chunks = [];
-  const lines = text.split("\n");
+  const lines = text.split(". ");
   let currentChunk = "";
 
   for (const line of lines) {
-    if ((currentChunk + line + "\n").length > maxLength) {
+    if ((currentChunk + line + ". ").length > maxLength) {
       chunks.push(currentChunk.trim());
       currentChunk = "";
     }
-    currentChunk += line + "\n";
+    currentChunk += line + ". ";
   }
 
   if (currentChunk.trim().length > 0) {
