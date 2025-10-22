@@ -732,10 +732,10 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
         //     ],
         //   })
         // } else {
-        //   APImessages.push({
-        //     role: "user",
-        //     content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-        //   })
+          APImessages.push({
+            role: "user",
+            content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+          })
         // }
       }
     });
