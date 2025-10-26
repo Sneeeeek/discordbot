@@ -89,7 +89,7 @@ async function loadServerData() {
   serverDataObj = JSON.parse(data);
 }
 
-client.on("ready", () => {
+client.on("clientReady", () => {
   console.log("I am ready!");
   myUID = client.user.id;
   // textToArray(); // Load the chat history from the JSON file
