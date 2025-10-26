@@ -1015,8 +1015,8 @@ async function youtube(url) {
   const hasAuto = findEnglishKey(info.automatic_captions);
   let filename;
 
-  console.log(hasManual);
-  console.log(hasAuto);
+  console.log("hasManual: " + hasManual);
+  console.log("hasAuto: " + hasAuto);
 
   if (!hasManual && !hasAuto) {
     console.warn("No English subtitles available ❌");
@@ -1045,7 +1045,12 @@ async function youtube(url) {
     filename = "chatHistory/transcript." + hasAuto + ".srt";
   }
 
-  const srt = fs.readFileSync(filename, 'utf8');
+  let srt;
+  try {
+      srt = fs.readFileSync(filename, 'utf8');
+  } catch (error) {
+    return "An error occured while trying to grab the transcript. This usually happens if a video doesnt have captions, or if you attempted to grab from an unsupported site"
+  }
 
   const lines = srt
     .split(/\r?\n/)
@@ -1089,6 +1094,7 @@ async function youtube(url) {
     output = response.choices[0].message.content;
     // fs.writeFileSync("ytAIresponse.txt", output);
     // output = "hello!";
+    fs.unlinkSync(filename)
   } catch (error) {
     return "OpenAI error:\n" + error;
   }
