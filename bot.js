@@ -4,7 +4,7 @@ import axios from "axios";
 import ytdl from 'youtube-dl-exec';
 
 dotenv.config();
-const token = process.env.DISCORDTOKEN; // Get the token from the environment variables
+const token = process.env.DISCORDTOKEN; // Get the token from the environment variables 
 const openAIKey = process.env.OPENAIKEY;
 // const MALclientID = process.env.MALCLIENTID
 const MALclientID = "377bea122b4add42e931a93bdb4e2133";
