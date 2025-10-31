@@ -1005,10 +1005,16 @@ async function getMALdetails(id, es_score) {
 async function youtube(url) {
   console.log("starting youtube feature");
 
-  const info = await ytdl(url, {
-    dumpSingleJson: true,
-    skipDownload: true,
-  });
+  let info;
+  try {
+    info = await ytdl(url, {
+      dumpSingleJson: true,
+      skipDownload: true,
+    });
+  } catch (error) {
+    return "Some sort of yt-dlp error. " + error;
+  }
+
 
   // Step 2: check if any English subtitles exist
   const hasManual = findEnglishKey(info.subtitles);
@@ -1033,6 +1039,7 @@ async function youtube(url) {
       output: 'chatHistory/transcript.%(ext)s'
     });
     filename = "chatHistory/transcript." + hasManual + ".srt";
+    // console.log(filename)
   } else if (hasAuto) {
     // Only auto captions exist
     await ytdl(url, {
@@ -1043,6 +1050,7 @@ async function youtube(url) {
       output: 'chatHistory/transcript.%(ext)s'
     });
     filename = "chatHistory/transcript." + hasAuto + ".srt";
+    // console.log(filename)
   }
 
   let srt;
