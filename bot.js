@@ -529,7 +529,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               },
               {
                 "type": "image_url",
-                image_url: { url: embedPost.embeds[0].data.image.url },
+                image_url: { url: embedPost.embeds[0].data.image.url.replace(":large","") },
               },
             ]
           }
