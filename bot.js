@@ -23,6 +23,7 @@ let myUID; // Variable to store the bot's user ID
 let chatHistoryArray; // Array to store chat history
 let userDataObj;
 let serverDataObj;
+let verbosityDataObj;
 
 function textToArray(message) {
   let filePath = "chatHistory/" + message.channelId + ".json";
@@ -87,6 +88,27 @@ async function loadServerData() {
   }
 
   serverDataObj = JSON.parse(data);
+}
+
+async function loadVerbosityData() {
+  let filePath = "chatHistory/verbosityData.json";
+
+  if (!fs.existsSync("chatHistory")) {
+    fs.mkdirSync("chatHistory");
+  }
+
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '', 'utf8');
+  }
+  const data = fs.readFileSync(filePath, 'utf-8');
+
+  if (data.trim() === '') {
+    console.error('verbosityData is empty.');
+    verbosityDataObj = {};
+    return;
+  }
+
+  verbosityDataObj = JSON.parse(data);
 }
 
 client.on("clientReady", () => {
@@ -197,6 +219,7 @@ Currently, my features include:
     textToArray(message);
     await loadUserData();
     await loadServerData();
+    await loadVerbosityData();
   } catch (error) {
     message.channel.send("File read error:\n" + error);
     return;
@@ -229,6 +252,27 @@ Currently, my features include:
     serverDataObj[server] = effort;
     message.channel.send("Set: \"" + effort + "\" for server \"" + message.guildId + "\"");
     fs.writeFileSync("chatHistory/serverData.json", JSON.stringify(serverDataObj, null, 2));
+    return;
+  }
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!delverb")) {
+    if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command.") }
+    let server = message.guildId;
+    message.channel.send("Deleting: \"" + verbosityDataObj[server] + "\" from server \"" + message.guildId + "\"");
+    delete verbosityDataObj[server];
+    fs.writeFileSync("chatHistory/verbosityData.json", JSON.stringify(verbosityDataObj, null, 2));
+    return;
+  }
+
+    if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setverb")) {
+    if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command."); return; }
+    let server = message.guildId;
+    let verbosityLevel = message.content.replace("!setverb", "").replace(/<@!?(\d+)>/g, '').trim();
+    console.log(verbosityLevel);
+    if (!["low", "medium", "high"].includes(verbosityLevel)) { message.channel.send("Incorrect input. Supported verbosity levels are low, medium, or high."); return; }
+    verbosityDataObj[server] = verbosityLevel;
+    message.channel.send("Set: \"" + verbosityLevel + "\" for server \"" + message.guildId + "\"");
+    fs.writeFileSync("chatHistory/verbosityData.json", JSON.stringify(verbosityDataObj, null, 2));
     return;
   }
 
@@ -820,6 +864,13 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     output = response.choices[0].message.content;
     console.log("medium effort");
   } else {
+    let verbosityChoice;
+    if (verbosityDataObj[userInput.guildId]) {
+      verbosityChoice = verbosityDataObj[userInput.guildId];
+    } else {
+      verbosityChoice = "low";
+    }
+
     let reasoningChoice;
     if (serverDataObj[userInput.guildId]) {
       reasoningChoice = serverDataObj[userInput.guildId];
@@ -830,12 +881,13 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     const response = await AIclient.chat.completions.create({
       model: model,
       reasoning_effort: reasoningChoice,
-      verbosity: "low",
+      verbosity: verbosityChoice,
       // service_tier: "flex",
       messages: [...APImessages],
     });
     output = response.choices[0].message.content;
     console.log("reasoningchoice = " + reasoningChoice);
+    console.log("verbositychoice = " + reasoningChoice);
   }
   
   // output = "hello!";
