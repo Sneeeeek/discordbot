@@ -2,6 +2,7 @@ import dotenv from 'dotenv'; // Load environment variables
 import fs from "fs";
 import axios from "axios";
 import ytdl from 'youtube-dl-exec';
+import os from 'node:os';
 
 dotenv.config();
 const token = process.env.DISCORDTOKEN; // Get the token from the environment variables 
@@ -1113,6 +1114,10 @@ async function youtube(url) {
     // console.log(filename)
   }
 
+  if(os.type == "Windows_NT") {
+    filename = "C:/Users/Sneeek/Documents/ytdlp/chatHistory/transcript." + hasAuto + ".srt"
+  }
+
   let srt;
   try {
       srt = fs.readFileSync(filename, 'utf8');
@@ -1152,7 +1157,7 @@ async function youtube(url) {
         },
         {
           role: "system",
-          content: "Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so proper nouns, especially names, may be incorrectly transcribed. Use context clues to determine if proper nouns are transcribed incorrectly and correct them if so. Summarize the content of the video:"
+          content: "Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so proper nouns, especially names, may be incorrectly transcribed. Use context clues to determine the property the video is about, and if proper nouns are transcribed incorrectly, correct them accordingly. Summarize the content of the video:"
         },
         {
           role: "system",
