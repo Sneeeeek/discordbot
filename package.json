@@ -5,7 +5,7 @@
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
     "openai": "^5.3.0",
-    "youtube-dl-exec": "^3.0.25"
+    "youtube-dl-exec": "^3.0.27"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

@@ -328,14 +328,23 @@ Currently, my features include:
         console.log("1 lenght");
         message.channel.send(response[0].replace("(1/1)", "").trim());
       } else {
-        response.forEach(element => {
+        for (let element of response) {
           element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-            console.log("emotes found")
+            console.log("emotes found");
             return addEmote(emoteInner);
           });
-          console.log("multi lenght");
-          message.channel.send(element);
-        });
+          console.log("multi length");
+          await message.channel.send(element);
+        }
+        // response.forEach(element => {
+        //   element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+        //     console.log("emotes found")
+        //     return addEmote(emoteInner);
+        //   });
+        //   console.log("multi lenght");
+        //   message.channel.send(element);
+        //   delay(5);
+        // });
       }
 
     } catch (error) {
@@ -1067,7 +1076,6 @@ async function youtube(url) {
     return "Some sort of yt-dlp error. " + error;
   }
 
-
   // Step 2: check if any English subtitles exist
   const hasManual = findEnglishKey(info.subtitles);
   const hasAuto = findEnglishKey(info.automatic_captions);
@@ -1088,7 +1096,7 @@ async function youtube(url) {
       writeSub: true,
       subLang: hasManual,
       subFormat: 'srt',
-      output: 'chatHistory/transcript.%(ext)s'
+      output: 'chatHistory/transcript.%(ext)s'  
     });
     filename = "chatHistory/transcript." + hasManual + ".srt";
     // console.log(filename)
@@ -1109,6 +1117,7 @@ async function youtube(url) {
   try {
       srt = fs.readFileSync(filename, 'utf8');
   } catch (error) {
+    console.error(error)
     return "An error occured while trying to grab the transcript. This usually happens if a video doesnt have captions, or if you attempted to grab from an unsupported site"
   }
 
@@ -1143,7 +1152,7 @@ async function youtube(url) {
         },
         {
           role: "system",
-          content: "Following is the youtube subtitle transcript from a video. Summarize the content of the video:"
+          content: "Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so proper nouns, especially names, may be incorrectly transcribed. Use context clues to determine if proper nouns are transcribed incorrectly and correct them if so. Summarize the content of the video:"
         },
         {
           role: "system",
