@@ -1148,9 +1148,9 @@ async function youtube(url) {
   try {
     const response = await AIclient.chat.completions.create({
       model: model,
-      reasoning_effort: "low",
+      // reasoning_effort: "low",
       // service_tier: "flex",
-      verbosity: "medium",
+      // verbosity: "medium",
       messages: [
         {
           role: "system",
@@ -1159,7 +1159,7 @@ async function youtube(url) {
         },
         {
           role: "system",
-          content: "Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so proper nouns, especially names, may be incorrectly transcribed. Use context clues to determine the property the video is about, and if proper nouns are transcribed incorrectly, correct them accordingly. Summarize the content of the video:"
+          content: "Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so proper nouns, especially names, may be incorrectly transcribed. Use context clues to determine the property the video is about, and if proper nouns are transcribed incorrectly, correct them accordingly. Do not use unneccesary amounts of space in your formatting, keep the formatting compact and do not use unneccesary markers like \"\\n---\\n\" to signify new section. Summarize the content of the video:"
         },
         {
           role: "system",
@@ -1177,18 +1177,19 @@ async function youtube(url) {
   return output;
 }
 
-function splitMessage(text, maxLength = 2000) {
+function splitMessage(text, maxLength = 1980) {
   console.log("splitting string");
   const chunks = [];
-  const lines = text.split(". ");
+
+  const lines = text.includes(". ") ? text.split(". ").map(p => p + ". ") : text.split("\n").map(p => p + "\n");
   let currentChunk = "";
 
-  for (const line of lines) {
-    if ((currentChunk + line + ". ").length > maxLength) {
+  for (const part of lines) {
+    if ((currentChunk + part).length > maxLength) {
       chunks.push(currentChunk.trim());
       currentChunk = "";
     }
-    currentChunk += line + ". ";
+    currentChunk += part;
   }
 
   if (currentChunk.trim().length > 0) {
@@ -1196,7 +1197,8 @@ function splitMessage(text, maxLength = 2000) {
   }
 
   // Add markers (1/total)
-  return chunks.map((chunk, i) => `(${i + 1}/${chunks.length})\n${chunk}`);
+  // return chunks.map((value, i) => `(${i + 1}/${chunks.length})\n${value}`);
+  return chunks;
 }
 
 function findEnglishKey(subs) {
