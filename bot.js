@@ -397,6 +397,7 @@ Currently, my features include:
 }
 
 const model = "gpt-5.1";
+const thinkingModel = "gpt-5.2";
 import OpenAI from "openai";
 const AIclient = new OpenAI({
   apiKey: openAIKey,
@@ -868,7 +869,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
   if (userInput.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!think")) {
     const response = await AIclient.chat.completions.create({
-      model: model,
+      model: thinkingModel,
       reasoning_effort: "medium",
       // service_tier: "flex",
       messages: [...APImessages],
