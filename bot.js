@@ -1178,22 +1178,30 @@ async function youtube(url) {
   return output;
 }
 
-function splitMessage(text, maxLength = 1980) {
+function splitMessage(text, maxLength = 1990) {
   console.log("splitting string");
   const chunks = [];
-
-  const lines = text.includes(". ") ? text.split(". ").map(p => p + ". ") : text.split("\n").map(p => p + "\n");
   let currentChunk = "";
 
-  for (const part of lines) {
+  const lines = text.includes(". ") ? text.split(". ").map(p => p + ". ") : text.split("\n").map(p => p + "\n");
+
+for (const part of lines) {
     if ((currentChunk + part).length > maxLength) {
       chunks.push(currentChunk.trim());
       currentChunk = "";
     }
-    currentChunk += part;
+
+    // Hard fallback if a single part is too big
+    if (part.length > maxLength) {
+      for (let i = 0; i < part.length; i += maxLength) {
+        chunks.push(part.slice(i, i + maxLength));
+      }
+    } else {
+      currentChunk += part;
+    }
   }
 
-  if (currentChunk.trim().length > 0) {
+  if (currentChunk.trim()) {
     chunks.push(currentChunk.trim());
   }
 
