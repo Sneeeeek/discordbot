@@ -1074,6 +1074,7 @@ async function youtube(url) {
   try {
     info = await ytdl(url, {
       dumpSingleJson: true,
+      jsRuntimes: "node",
       skipDownload: true,
     });
   } catch (error) {
@@ -1099,6 +1100,7 @@ async function youtube(url) {
       skipDownload: true,
       writeSub: true,
       subLang: hasManual,
+      jsRuntimes: "node",
       subFormat: 'srt',
       output: 'chatHistory/transcript.%(ext)s'  
     });
@@ -1110,6 +1112,7 @@ async function youtube(url) {
       skipDownload: true,
       writeAutoSub: true,
       subLang: hasAuto,
+      jsRuntimes: "node",
       subFormat: 'srt',
       output: 'chatHistory/transcript.%(ext)s'
     });
@@ -1168,10 +1171,10 @@ async function youtube(url) {
         },
       ]
     });
-    output = response.choices[0].message.content;
+    output = response.choices[0].message.content.replace("**","");
     // fs.writeFileSync("ytAIresponse.txt", output);
     // output = "hello!";
-    fs.unlinkSync(filename)
+    // fs.unlinkSync(filename)
   } catch (error) {
     return "OpenAI error:\n" + error;
   }
