@@ -1171,7 +1171,8 @@ async function youtube(url) {
         },
       ]
     });
-    output = response.choices[0].message.content.replace("**","");
+    output = response.choices[0].message.content;
+    while(output.includes("**")){output = output.replace("**","");}
     // fs.writeFileSync("ytAIresponse.txt", output);
     // output = "hello!";
     // fs.unlinkSync(filename)
