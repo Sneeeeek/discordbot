@@ -396,8 +396,8 @@ Currently, my features include:
   // console.log(chatHistoryArray[1])
 }
 
-const model = "gpt-5.1";
-const thinkingModel = "gpt-5.2";
+const model = "gpt-5.4";
+const thinkingModel = "gpt-5.4";
 import OpenAI from "openai";
 const AIclient = new OpenAI({
   apiKey: openAIKey,
