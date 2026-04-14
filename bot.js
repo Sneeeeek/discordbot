@@ -1163,7 +1163,15 @@ async function youtube(url) {
         },
         {
           role: "system",
-          content: "Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so proper nouns, especially names, may be incorrectly transcribed. Use context clues to determine the property the video is about, and if proper nouns are transcribed incorrectly, correct them accordingly. Do not use unneccesary amounts of space in your formatting, keep the formatting compact and do not use unneccesary markers like \"\\n---\\n\" to signify new section. Summarize the content of the video:"
+          content: `
+          Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so some things may be incorrectly transcribed. 
+          Use context clues to determine the intellecual property the video is about. 
+          The video may be about something that is not in your training data. If that is the case, do not try to overcorrect to correct the transcription. 
+          If the topic is something familiar to you, you may correct accordingly when things like proper nouns and such if they are transcribed incorrectly.
+          Therefore, first try to discover if the topic is something you are familiar with, and then decide whether to correct or not. If you are unsure, do the safe option and do not correct.
+          Do not use unneccesary amounts of space in your formatting, keep the formatting compact and do not use unneccesary markers like \"\\n---\\n\" to signify new section. 
+          Summarize the content of the video:
+          `
         },
         {
           role: "system",
