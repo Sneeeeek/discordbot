@@ -1162,13 +1162,14 @@ async function youtube(url) {
             .replace("YOU HAVE A HARD LIMIT OF 2000 SYMBOLS FOR YOUR RESPONSES, DO NOT EXCEED THIS LIMIT UNDER ANY CIRCUMSTANCES.", "")
         },
         {
+          //           If the topic is something familiar to you, you may correct accordingly when things like proper nouns and such if they are transcribed incorrectly. 
+          //           Therefore, first try to discover if the topic is something you are familiar with, and then decide whether to correct or not. If you are unsure, do the safe option and do not correct.
           role: "system",
           content: `
           Following is the youtube subtitle transcript from a video. The transcript may be automatically generated, so some things may be incorrectly transcribed. 
           Use context clues to determine the intellecual property the video is about. 
-          The video may be about something that is not in your training data. If that is the case, do not try to overcorrect to correct the transcription. 
-          If the topic is something familiar to you, you may correct accordingly when things like proper nouns and such if they are transcribed incorrectly.
-          Therefore, first try to discover if the topic is something you are familiar with, and then decide whether to correct or not. If you are unsure, do the safe option and do not correct.
+          The video may be about something that is not in your training data or familiar to you. If that is the case, DO NOT try to correct the transcription. 
+          In such cases just repeat whatever name or proper noun the transcript has, even if its probably wrong.
           Do not use unneccesary amounts of space in your formatting, keep the formatting compact and do not use unneccesary markers like \"\\n---\\n\" to signify new section. 
           Summarize the content of the video:
           `
