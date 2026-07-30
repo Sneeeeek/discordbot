@@ -249,7 +249,7 @@ Currently, my features include:
     let server = message.guildId;
     let effort = message.content.replace("!setreason", "").replace(/<@!?(\d+)>/g, '').trim();
     console.log(effort);
-    if (!["minimal", "low", "medium", "high"].includes(effort)) { message.channel.send("Incorrect input. Supported effort levels are minimal, low, medium, or high."); return; }
+    if (!['none', 'low', 'medium', 'high', 'xhigh'].includes(effort)) { message.channel.send("Incorrect input. Supported effort levels are none, low, medium, high, or xhigh."); return; }
     serverDataObj[server] = effort;
     message.channel.send("Set: \"" + effort + "\" for server \"" + message.guildId + "\"");
     fs.writeFileSync("chatHistory/serverData.json", JSON.stringify(serverDataObj, null, 2));
@@ -763,6 +763,20 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       }
     });
   } else {
+    // Use pronouns for context only; do not mutate stored history usernames.
+    // This avoids repeated suffixes in saved chat history.
+    function usernameWithPronoun(element) {
+      if (element.id && userDataObj[element.id]) {
+        const suffix = " (pref. pronoun: " + userDataObj[element.id] + ")";
+        if (element.username.endsWith(suffix)) {
+          return element.username;
+        }
+        return element.username + suffix;
+      }
+      return element.username;
+    }
+
+    // Rebuild the context output using transient names.
     chatHistoryArray.slice(-16).forEach(element => {
       if (element.username === "Snek dev bot" || element.username === "Feixiao") {
         APImessages.push({
@@ -770,32 +784,15 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
           content: element.message,
         })
       } else if (element.username === "system") {
-        // console.log("system message is included");
         APImessages.push({
           role: "system",
           content: element.content,
         })
       } else {
-        // if (element.image) {
-        //   APImessages.push({
-        //     role: "user",
-        //     content: [
-        //       {
-        //         "type": "text",
-        //         "text": element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-        //       },
-        //       {
-        //         "type": "image_url",
-        //         image_url: { url: element.image },
-        //       },
-        //     ],
-        //   })
-        // } else {
-          APImessages.push({
-            role: "user",
-            content: element.username + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
-          })
-        // }
+        APImessages.push({
+          role: "user",
+          content: usernameWithPronoun(element) + ", (" + element.date + "): " + element.message.replace(/<@!?(\d+)>/g, '').trim(),
+        })
       }
     });
 
@@ -853,6 +850,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
         "username": "" + userInput.member.displayName + "",
         "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
         "message": "" + userInput.content + "",
+        "id": "" + userInput.author.id + "",
         "image": "" + curIMG + ""
       }
       chatHistoryArray.push(contentToAppendUser);
@@ -860,7 +858,8 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       contentToAppendUser = {
         "username": "" + userInput.member.displayName + "",
         "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
-        "message": "" + userInput.content + ""
+        "message": "" + userInput.content + "",
+        "id": "" + userInput.author.id + "",
       }
       chatHistoryArray.push(contentToAppendUser);
     }
@@ -890,7 +889,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     if (serverDataObj[userInput.guildId]) {
       reasoningChoice = serverDataObj[userInput.guildId];
     } else {
-      reasoningChoice = "minimal";
+      reasoningChoice = "low";
     }
 
     const response = await AIclient.chat.completions.create({
