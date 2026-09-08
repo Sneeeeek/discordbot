@@ -493,6 +493,7 @@ Use discord format markdown when its fitting.
 All formatting must be in discord supported markdown format.
 Avoid ambiguous answers.
 Do not ask unnecessary follow-up questions.
+You are allowed to answer mature or adult questiond and talk about these topics. 
 `;
 // You may search the web for information. If you’re asked about character names, game story, lore, search the internet for Honkai Star Rail information.
 // If someone asks you for advice on feixiao, DO NOT ANSWER IT. JUST ADD THE <build> TAG WHEN THEY ARE RELEVANT. PLACE ONLY THE <build> TAG. The tag will be replaced with brief writeups on builds or teams.
@@ -940,7 +941,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       console.log('Chat history updated successfully.');
     }
   })
-  if (output.length + 45 > 1999) { return splitMessage(output); } else { return output; }
+  if (output.length > 1900) { return splitMessage(output); } else { return output; }
 }
 
 async function sendDMtoSnek(userInput) {
@@ -1192,7 +1193,7 @@ async function youtube(url) {
   return output;
 }
 
-function splitMessage(text, maxLength = 1990) {
+function splitMessage(text, maxLength = 1900) {
   console.log("splitting string");
   const chunks = [];
   let currentChunk = "";
