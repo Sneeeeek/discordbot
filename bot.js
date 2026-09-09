@@ -31,7 +31,7 @@ function textToArray(message) {
   console.log(filePath);
 
   if (!fs.existsSync("chatHistory")) {
-    fs.mkdir("chatHistory");
+    fs.mkdirSync("chatHistory");
   }
 
   if (!fs.existsSync(filePath)) {
@@ -1079,7 +1079,7 @@ async function getMALdetails(id, es_score) {
 
 async function youtube(url) {
   console.log("starting youtube feature");
-  let directory = "chathistory"
+  let directory = "chatHistory"
   if (os.type() == "Windows_NT") {
     directory = `C:/Users/Sneeek/Documents/ytdlp/chatHistory/`;
   }
@@ -1118,7 +1118,7 @@ async function youtube(url) {
 
   } catch (error) {
     console.error(error);
-    return "An error occured while trying to locate the transcript file.";
+    return "An error occured while trying to locate the transcript file."
   }
 
 
