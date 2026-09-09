@@ -1219,7 +1219,8 @@ async function youtube(url) {
     while (output.includes("**")) { output = output.replace("**", ""); }
     // fs.writeFileSync("ytAIresponse.txt", output);
     // output = "hello!";
-    // fs.unlinkSync(filename)
+    // console.log(`${directory}/${transcriptFile}`)
+    fs.readFileSync(`${directory}/${transcriptFile}`, "utf8");
   } catch (error) {
     return "OpenAI error:\n" + error;
   }
