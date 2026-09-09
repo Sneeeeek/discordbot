@@ -265,7 +265,7 @@ Currently, my features include:
     return;
   }
 
-    if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setverb")) {
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!setverb")) {
     if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command."); return; }
     let server = message.guildId;
     let verbosityLevel = message.content.replace("!setverb", "").replace(/<@!?(\d+)>/g, '').trim();
@@ -320,84 +320,92 @@ Currently, my features include:
         return; // stop early
       }
 
-      let response = splitMessage(subs);
+      console.log("Splitting from youtube.")
+      // writeFileSync("ytFile.txt",subs, "utf-8")
+      if (subs instanceof Error) {
+        await message.channel.send(subs.message || String(subs));
+      } else {
+        let response = splitMessage(subs);
 
       if (response.length == 1) {
         response[0] = response[0].replace(/<emote:(.*?)>/g, (match, emoteInner) => {
             return addEmote(emoteInner);
           });
-        console.log("1 lenght");
-        message.channel.send(response[0].replace("(1/1)", "").trim());
-      } else {
-        for (let element of response) {
+
+          console.log("1 length");
+          await message.channel.send(response[0].replace("(1/1)", "").trim());
+        } else {
+          for (let element of response) {
           element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-            console.log("emotes found");
-            return addEmote(emoteInner);
-          });
-          console.log("multi length");
-          await message.channel.send(element);
+              console.log("emotes found");
+              return addEmote(emoteInner);
+            });
+
+            console.log("multi length");
+            await message.channel.send(element);
+          }
         }
-        // response.forEach(element => {
-        //   element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-        //     console.log("emotes found")
-        //     return addEmote(emoteInner);
-        //   });
-        //   console.log("multi lenght");
-        //   message.channel.send(element);
-        //   delay(5);
-        // });
-      }
-
+      // response.forEach(element => {
+      //   element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+      //     console.log("emotes found")
+      //     return addEmote(emoteInner);
+      //   });
+      //   console.log("multi lenght");
+      //   message.channel.send(element);
+      //   delay(5);
+      // });
+    }
     } catch (error) {
-      console.error(error);
-      message.channel.send(error);
-    }
-    return;
+    console.error(error);
+    message.channel.send(error);
+  }
+  return;
+}
+
+try {
+  // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
+  try { await message.channel.sendTyping(); } catch { }
+
+  let messageVariable;
+
+  if (attachment) {
+    console.log("query with image.");
+    messageVariable = await queryOpenAI(message, attachment);
+  }
+  else if (reply) {
+    console.log("query with reply.");
+    messageVariable = await queryOpenAI(message, null, reply, isFeixiao);
+  }
+  else {
+    console.log("query with no image.");
+    messageVariable = await queryOpenAI(message);
+    // console.log("pinged");
   }
 
-  try {
-    // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
-    try{await message.channel.sendTyping();} catch{}
-
-    let messageVariable;
-
-    if (attachment) {
-      console.log("query with image.");
-      messageVariable = await queryOpenAI(message, attachment);
+  if (Array.isArray(messageVariable)) {
+    console.log("response was longer than 2000, splitting");
+    message.reply({ content: messageVariable[0], allowedMentions: { parse: ["users", "roles"] } });
+    for (let index = 1; index < messageVariable.length; index++) {
+      message.channel.send(messageVariable[index]);
     }
-    else if (reply) {
-      console.log("query with reply.");
-      messageVariable = await queryOpenAI(message, null, reply, isFeixiao);
-    }
-    else {
-      console.log("query with no image.");
-      messageVariable = await queryOpenAI(message);
-      // console.log("pinged");
-    }
-
-    if (Array.isArray(messageVariable)) {
-      console.log("response was longer than 2000, splitting");
-      message.reply({ content: messageVariable[0], allowedMentions: { parse: ["users", "roles"] } });
-      for (let index = 1; index < messageVariable.length; index++) {
-        message.channel.send(messageVariable[index]);
-      }
-    } else {
-      console.log("response was shorter than 2000");
-      message.reply({ content: messageVariable, allowedMentions: { parse: ["users", "roles"] } });
-    }
-
-  } catch (error) {
-    console.log(error);
-    // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
-    // sendDMtoSnek(JSON.stringify(error, null, 2));
-    message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
+  } else {
+    console.log("response was shorter than 2000");
+    message.reply({ content: messageVariable, allowedMentions: { parse: ["users", "roles"] } });
   }
+
+} catch (error) {
+  console.log(error);
+  // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
+  // sendDMtoSnek(JSON.stringify(error, null, 2));
+  message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
+}
   // console.log(chatHistoryArray[1])
 }
 
 const model = "gpt-5.4-mini";
 const thinkingModel = "gpt-5.4";
 import OpenAI from "openai";
+import { writeFileSync } from 'node:fs';
 const AIclient = new OpenAI({
   apiKey: openAIKey,
 });
@@ -589,14 +597,14 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
               },
               {
                 "type": "image_url",
-                image_url: { url: embedPost.embeds[0].data.image.url.replace(":large","") },
+                image_url: { url: embedPost.embeds[0].data.image.url.replace(":large", "") },
               },
             ]
           }
           curIMG = embedPost.embeds[0].data.image.url;
         } else if (embedPost.embeds[0].data.thumbnail) {
           console.log("rich embed with image thumbnail");
-          embedContainer={
+          embedContainer = {
             role: "system",
             content: [
               {
@@ -613,7 +621,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
           curIMG = embedPost.embeds[0].data.thumbnail;
         } else {
           console.log("rich embed without image");
-          embedContainer={
+          embedContainer = {
             role: "system",
             content: "message includes an embed. Post author: " + embedPost.embeds[0].data.author.name +
               ".\n Post body: " + embedPost.embeds[0].data.description
@@ -670,8 +678,8 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       case "video":
         console.log("video embed");
         let author;
-        if(typeof embedPost.embeds[0].data.author !== "undefined"){author = embedPost.embeds[0].data.author.name} else {author = embedPost.embeds[0].data.title; console.log("tiktok embed")}
-        embedContainer={
+        if (typeof embedPost.embeds[0].data.author !== "undefined") { author = embedPost.embeds[0].data.author.name } else { author = embedPost.embeds[0].data.title; console.log("tiktok embed") }
+        embedContainer = {
           role: "system",
           content: [
             {
@@ -692,7 +700,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
 
       case "link":
         console.log("link embed");
-        embedContainer={
+        embedContainer = {
           role: "system",
           content: [
             {
@@ -798,7 +806,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     });
 
     if (attachment) {
-      console.log(attachment.slice(0, 50));
+      // console.log(attachment.slice(0, 50));
       APImessages.push({
         role: "user",
         content: [
@@ -836,34 +844,34 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
       console.log("attachment is not present");
     }
   }
-  
 
-  if (typeof embedContainer !== "undefined"){
+
+  if (typeof embedContainer !== "undefined") {
     console.log("embedContainer is not empty");
     // fs.writeFileSync("testEmbed.json", JSON.stringify(embedContainer, null, 2));
     APImessages.push(embedContainer);
   }
 
 
-    console.log(curIMG);
-    if (curIMG) {
-      contentToAppendUser = {
-        "username": "" + userInput.member.displayName + "",
-        "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
-        "message": "" + userInput.content + "",
-        "id": "" + userInput.author.id + "",
-        "image": "" + curIMG + ""
-      }
-      chatHistoryArray.push(contentToAppendUser);
-    } else {
-      contentToAppendUser = {
-        "username": "" + userInput.member.displayName + "",
-        "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
-        "message": "" + userInput.content + "",
-        "id": "" + userInput.author.id + "",
-      }
-      chatHistoryArray.push(contentToAppendUser);
+  // console.log(curIMG);
+  if (curIMG) {
+    contentToAppendUser = {
+      "username": "" + userInput.member.displayName + "",
+      "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
+      "message": "" + userInput.content + "",
+      "id": "" + userInput.author.id + "",
+      "image": "" + curIMG + ""
     }
+    chatHistoryArray.push(contentToAppendUser);
+  } else {
+    contentToAppendUser = {
+      "username": "" + userInput.member.displayName + "",
+      "date": "" + new Date(userInput.createdTimestamp).toUTCString() + "",
+      "message": "" + userInput.content + "",
+      "id": "" + userInput.author.id + "",
+    }
+    chatHistoryArray.push(contentToAppendUser);
+  }
 
   // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
 
@@ -904,7 +912,7 @@ async function queryOpenAI(userInput, attachment, reply, isFeixiao) {
     console.log("reasoningchoice = " + reasoningChoice);
     console.log("verbositychoice = " + reasoningChoice);
   }
-  
+
   // output = "hello!";
 
   // fs.writeFileSync("test.json", JSON.stringify(APImessages, null, 2));
@@ -1071,67 +1079,48 @@ async function getMALdetails(id, es_score) {
 
 async function youtube(url) {
   console.log("starting youtube feature");
+  let directory = "chathistory/"
+  if (os.type() == "Windows_NT") {
+    directory = `C:/Users/Sneeek/Documents/ytdlp/chatHistory/`;
+  }
 
-  let info;
   try {
-    info = await ytdl(url, {
-      dumpSingleJson: true,
-      // jsRuntimes: "node",
+    await ytdl(url, {
       skipDownload: true,
+      writeSubs: true,
+      writeAutoSubs: true,
+      subLangs: "en-US, en-UK, en-orig",
+      subFormat: "srt",
+      output: "chatHistory/transcript.%(ext)s",
     });
   } catch (error) {
-    return "Some sort of yt-dlp error. " + error;
+    return error;
   }
 
-  // Step 2: check if any English subtitles exist
-  const hasManual = findEnglishKey(info.subtitles);
-  const hasAuto = findEnglishKey(info.automatic_captions);
-  let filename;
+  let transcriptFile;
+  try {
+    const files = fs.readdirSync(directory);
+    transcriptFile = files.find(file =>
+      /^transcript\..+\.srt$/.test(file)
+    );
+    // console.log(transcriptFile)
 
-  console.log("hasManual: " + hasManual);
-  console.log("hasAuto: " + hasAuto);
+    if (!transcriptFile) {
+      return "No transcript file found.";
+    }
 
-  if (!hasManual && !hasAuto) {
-    console.warn("No English subtitles available ❌");
-    return; // end early
+  } catch (error) {
+    console.error(error);
+    return "An error occured while trying to locate the transcript file.";
   }
 
-  if (hasManual) {
-    // Manual subtitles exist
-    await ytdl(url, {
-      skipDownload: true,
-      writeSub: true,
-      subLang: hasManual,
-      // jsRuntimes: "node",
-      subFormat: 'srt',
-      output: 'chatHistory/transcript.%(ext)s'  
-    });
-    filename = "chatHistory/transcript." + hasManual + ".srt";
-    // console.log(filename)
-  } else if (hasAuto) {
-    // Only auto captions exist
-    await ytdl(url, {
-      skipDownload: true,
-      writeAutoSub: true,
-      subLang: hasAuto,
-      // jsRuntimes: "node",
-      subFormat: 'srt',
-      output: 'chatHistory/transcript.%(ext)s'
-    });
-    filename = "chatHistory/transcript." + hasAuto + ".srt";
-    // console.log(filename)
-  }
-
-  if(os.type == "Windows_NT") {
-    filename = "C:/Users/Sneeek/Documents/ytdlp/chatHistory/transcript." + hasAuto + ".srt"
-  }
 
   let srt;
   try {
-      srt = fs.readFileSync(filename, 'utf8');
+    srt = fs.readFileSync(`${directory}/${transcriptFile}`, "utf8");
   } catch (error) {
-    console.error(error)
-    return "An error occured while trying to grab the transcript. This usually happens if a video doesnt have captions, or if you attempted to grab from an unsupported site"
+    console.error(error);
+    return "An error occured while trying to grab the transcript. This usually happens if a video doesnt have captions, or if you attempted to grab from an unsupported site";
   }
 
   const lines = srt
@@ -1178,12 +1167,12 @@ async function youtube(url) {
         },
         {
           role: "system",
-          content: "Channel: " + info.uploader + " Title: " + info.title + " Transcript: " + text
+          content: text
         },
       ]
     });
     output = response.choices[0].message.content;
-    while(output.includes("**")){output = output.replace("**","");}
+    while (output.includes("**")) { output = output.replace("**", ""); }
     // fs.writeFileSync("ytAIresponse.txt", output);
     // output = "hello!";
     // fs.unlinkSync(filename)
@@ -1200,7 +1189,7 @@ function splitMessage(text, maxLength = 1900) {
 
   const lines = text.includes(". ") ? text.split(". ").map(p => p + ". ") : text.split("\n").map(p => p + "\n");
 
-for (const part of lines) {
+  for (const part of lines) {
     if ((currentChunk + part).length > maxLength) {
       chunks.push(currentChunk.trim());
       currentChunk = "";
@@ -1223,9 +1212,4 @@ for (const part of lines) {
   // Add markers (1/total)
   // return chunks.map((value, i) => `(${i + 1}/${chunks.length})\n${value}`);
   return chunks;
-}
-
-function findEnglishKey(subs) {
-  if (!subs) return null;
-  return Object.keys(subs).find(lang => lang.startsWith("en"));
 }
