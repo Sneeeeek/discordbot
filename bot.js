@@ -305,6 +305,43 @@ Currently, my features include:
     return;
   }
 
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!getsrt")) {
+    if (message.author.id !== snekUserID) { message.channel.send("You dont have access to this command.") }
+    const files = fs.readdirSync("chatHistory");
+    const transcriptFiles = files.filter(file =>
+      /\.srt$/i.test(file)
+    );
+    message.channel.send("Files: " + transcriptFiles)
+    return;
+  }
+
+  if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!delfile")) {
+    if (message.author.id !== snekUserID) {
+      message.channel.send("You dont have access to this command."); return;
+    }
+
+    let filename = message.content
+      .replace("!delfile", "")
+      .replace(/<@!?(\d+)>/g, '')
+      .trim();
+
+    if (!filename.endsWith(".srt")) {
+      message.channel.send("Only .srt files are allowed.");
+      return;
+    }
+
+    const filePath = "chatHistory/" + filename;
+
+    if (!fs.existsSync(filePath)) {
+      message.channel.send("File not found.");
+      return;
+    }
+
+    fs.unlinkSync(filePath);
+    message.channel.send(`Deleted: "${filename}"`);
+    return;
+  }
+
   if (message.content.replace(/<@!?(\d+)>/g, '').trim().startsWith("!yt")) {
     // message.reply({ content: "Unfortunately, youtube hates fun and has decided to once again make it even harder to grab subtitles. The command will be unavailable for the time being.\n\nhttps://github.com/yt-dlp/yt-dlp/issues/14404"});
 
