@@ -327,8 +327,8 @@ Currently, my features include:
       } else {
         let response = splitMessage(subs);
 
-      if (response.length == 1) {
-        response[0] = response[0].replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+        if (response.length == 1) {
+          response[0] = response[0].replace(/<emote:(.*?)>/g, (match, emoteInner) => {
             return addEmote(emoteInner);
           });
 
@@ -336,7 +336,7 @@ Currently, my features include:
           await message.channel.send(response[0].replace("(1/1)", "").trim());
         } else {
           for (let element of response) {
-          element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+            element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
               console.log("emotes found");
               return addEmote(emoteInner);
             });
@@ -345,60 +345,60 @@ Currently, my features include:
             await message.channel.send(element);
           }
         }
-      // response.forEach(element => {
-      //   element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
-      //     console.log("emotes found")
-      //     return addEmote(emoteInner);
-      //   });
-      //   console.log("multi lenght");
-      //   message.channel.send(element);
-      //   delay(5);
-      // });
-    }
+        // response.forEach(element => {
+        //   element = element.replace(/<emote:(.*?)>/g, (match, emoteInner) => {
+        //     console.log("emotes found")
+        //     return addEmote(emoteInner);
+        //   });
+        //   console.log("multi lenght");
+        //   message.channel.send(element);
+        //   delay(5);
+        // });
+      }
     } catch (error) {
-    console.error(error);
-    message.channel.send(error);
-  }
-  return;
-}
-
-try {
-  // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
-  try { await message.channel.sendTyping(); } catch { }
-
-  let messageVariable;
-
-  if (attachment) {
-    console.log("query with image.");
-    messageVariable = await queryOpenAI(message, attachment);
-  }
-  else if (reply) {
-    console.log("query with reply.");
-    messageVariable = await queryOpenAI(message, null, reply, isFeixiao);
-  }
-  else {
-    console.log("query with no image.");
-    messageVariable = await queryOpenAI(message);
-    // console.log("pinged");
-  }
-
-  if (Array.isArray(messageVariable)) {
-    console.log("response was longer than 2000, splitting");
-    message.reply({ content: messageVariable[0], allowedMentions: { parse: ["users", "roles"] } });
-    for (let index = 1; index < messageVariable.length; index++) {
-      message.channel.send(messageVariable[index]);
+      console.error(error);
+      message.channel.send(error);
     }
-  } else {
-    console.log("response was shorter than 2000");
-    message.reply({ content: messageVariable, allowedMentions: { parse: ["users", "roles"] } });
+    return;
   }
 
-} catch (error) {
-  console.log(error);
-  // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
-  // sendDMtoSnek(JSON.stringify(error, null, 2));
-  message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
-}
+  try {
+    // message.channel.send(`Hey <@${message.author.id}>, you mentioned me?`);
+    try { await message.channel.sendTyping(); } catch { }
+
+    let messageVariable;
+
+    if (attachment) {
+      console.log("query with image.");
+      messageVariable = await queryOpenAI(message, attachment);
+    }
+    else if (reply) {
+      console.log("query with reply.");
+      messageVariable = await queryOpenAI(message, null, reply, isFeixiao);
+    }
+    else {
+      console.log("query with no image.");
+      messageVariable = await queryOpenAI(message);
+      // console.log("pinged");
+    }
+
+    if (Array.isArray(messageVariable)) {
+      console.log("response was longer than 2000, splitting");
+      message.reply({ content: messageVariable[0], allowedMentions: { parse: ["users", "roles"] } });
+      for (let index = 1; index < messageVariable.length; index++) {
+        message.channel.send(messageVariable[index]);
+      }
+    } else {
+      console.log("response was shorter than 2000");
+      message.reply({ content: messageVariable, allowedMentions: { parse: ["users", "roles"] } });
+    }
+
+  } catch (error) {
+    console.log(error);
+    // sendDMtoSnek(JSON.stringify(message, null, 2) + "\n\n\n" + JSON.stringify(error, null, 2));
+    // sendDMtoSnek(JSON.stringify(error, null, 2));
+    message.channel.send(`Sorry <@${message.author.id}>, I encountered an error while processing your request.\nError message: ${error.message}`);
+  }
   // console.log(chatHistoryArray[1])
 }
 
@@ -1084,7 +1084,14 @@ async function youtube(url) {
     directory = `C:/Users/Sneeek/Documents/ytdlp/chatHistory/`;
   }
 
+  let info;
   try {
+    info = await ytdl(url, {
+      dumpSingleJson: true,
+      // jsRuntimes: "node",
+      skipDownload: true,
+    });
+
     await ytdl(url, {
       skipDownload: true,
       writeSubs: true,
@@ -1167,7 +1174,7 @@ async function youtube(url) {
         },
         {
           role: "system",
-          content: text
+          content: "Channel: " + info.uploader + " Title: " + info.title + " Transcript: " + text
         },
       ]
     });
