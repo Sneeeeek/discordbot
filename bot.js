@@ -1079,7 +1079,7 @@ async function getMALdetails(id, es_score) {
 
 async function youtube(url) {
   console.log("starting youtube feature");
-  let directory = "chathistory/"
+  let directory = "chathistory"
   if (os.type() == "Windows_NT") {
     directory = `C:/Users/Sneeek/Documents/ytdlp/chatHistory/`;
   }
