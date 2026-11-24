@@ -439,8 +439,8 @@ Currently, my features include:
   // console.log(chatHistoryArray[1])
 }
 
-const model = "gpt-5.4-mini";
-const thinkingModel = "gpt-5.4";
+const model = "gpt-5.6-luna";
+const thinkingModel = "gpt-5.6-luna";
 import OpenAI from "openai";
 import { writeFileSync } from 'node:fs';
 const AIclient = new OpenAI({
